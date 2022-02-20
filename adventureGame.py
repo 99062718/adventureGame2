@@ -8,10 +8,13 @@
 # - Npcs and player attacks can be removed and added
 # - Attacks can be learned by either leveling up or buying them from a shop
 # - Every character has mana. Some attacks take mana and others dont. If mana reaches 0 the mana attacks cannot be used anymore
-#Create npc dialogue system (Normal importance)
+#Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Npcs recruited can be put inside or removed from the team
-#Create inventory system (Lesser imporance)
+# - Implement functionality for passedCheck within checkForNewDialogue (should activate addDialogue)
+# - Implement addDialogue to add dialogue to currentDialogue dict
+# - Add possibility for shops
+#Create inventory system (Normal importance)
 # - Items can be equipped from here
 #Create item support for characters (Normal importance)
 # - Items can give special bonusses like +atk, +def or +agility but can also give special bonusses like extra attack done to wolf enemies
@@ -19,21 +22,23 @@
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
 # - Bosses might be able to drop special items that can only be obtained from them
 # - Gold obtained from killing enemies should be a mix between random and set
-#Create options menu with current zone, health, cheatcodes, ect (Important)
+#Create options menu with current zone, health, cheatcodes, ect (Parity)
 #Support for multiple save files (Very imporant!!)
+# - Reminder that obj.__dict__ is a thing
 #Support for multiple campaigns (which can all have multiple characters) (Very Important!!)
-#Implement checkHasItem in character class
-#Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
-#Create dict with players accomplishments (did quest, beat boss, ect)
+#Finish all player operated character functionalities
+# - Implement checkHasItem in character class
+# - Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
+# - Create dict with players accomplishments (did quest, beat boss, ect)
 
-class characters:
-    def __init__(self, name, health, attacks=None, items=None):
+class Characters:
+    def __init__(self, characterData):
         self.__characterStats = {
-            "name": name,
-            "health": health,
-            "maxHealth": health,
-            "attacks": attacks if attacks != None else {},
-            "items": items if items != None else {}
+            "name": characterData["name"],
+            "health": characterData["health"],
+            "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
+            "attacks": characterData["attacks"] if "attacks" in characterData else {},
+            "items": characterData["items"] if "items" in characterData else {}
         }
 
     def changeStat(self, changeHow, statToChange, value):
@@ -54,7 +59,7 @@ class characters:
             raise ValueError(f"{statToChange} is not an existing stat")
 
     def checkStat(self, statToCheck):
-        if statToCheck in __characterStats:
+        if statToCheck in self.__characterStats:
             return self.__characterStats[statToCheck]
         else:
             raise ValueError(f"{statToCheck} is not an existing stat")
@@ -110,24 +115,8 @@ def choiceInput(choices, noOptions):
     for choice in choices:
         showChoice = True
         if "blockIf" in choice:
-            for key in choice["blockIf"]:
-                if key == "hasItem":
-                    for item in choice["blockIf"]["hasItem"]: #This should loop through all characters within the team
-                        if checkHasItem(item[0], "not" if isinstance(item, array) else "has"):
-                            showChoice = False
-                            break
-                elif key == "onTeam":
-                    for character in choice["blockIf"]["onTeam"]:
-                        if character in playerTeam or isinstance(character, array) and character not in playerTeam:
-                            showChoice = False
-                            break
-                elif key == "defeatedBoss":
-                    for boss in choice["blockIf"]["defeatedBoss"]:
-                        if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss not in playerAccomplishments["defeatedBosses"]:
-                            showChoice = False
-                            break
-                else:
-                    raise ValueError(f"{key} is not a valid blockIf state")
+            if checkIfHasAchievement(choice["blockIf"]):
+                showChoice = False
 
         if showChoice:
             choicesToPrint.append(choice)
@@ -160,3 +149,107 @@ def talkTo(character):
 
 def savePosition(): #Save in which area player resides
     pass
+
+def checkIfHasAchievement(toCheck, needsAll=False):
+    hasAll = True
+    for key in toCheck:
+        if key == "hasItem":
+            for item in toCheck["hasItem"]: #This should loop through all characters within the team
+                if checkHasItem(item[0], "not" if isinstance(item, array) else "has"):
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
+        elif key == "onTeam":
+            for character in toCheck["onTeam"]:
+                if character in playerTeam or isinstance(character, array) and character not in playerTeam:
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
+        elif key == "defeatedBoss":
+            for boss in toCheck["defeatedBoss"]:
+                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss not in playerAccomplishments["defeatedBosses"]:
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
+
+
+#--------------------------------------------------------------------------------Dialogue system stuff
+
+class npc:
+    def __init__(self, characterInfo, currentDialogue, possibleDialogue, recruitStats=None):
+        self.firstName = characterInfo[0]
+        self.lastName = characterInfo[1]
+        self.dialogue = dialogue
+        self.emotions = {
+            "anger": 0,
+            "happiness": 0,
+            "sadness": 0
+        }
+        self.recruitStats = recruitStats
+
+    def fullName(self):
+        return f"{self.firstName} {self.lastName}"
+
+    def hierarchyCheck(self):
+        for key, text in self.currentDialogue.items():
+            if len(text) != 0:
+                return key
+        raise ValueError("No dialogue found")
+
+    def checkForNewDialogue(self):
+        for hierarchyTier in self.possibleDialogue:
+            for dialogue in hierarchyTier:
+                passedCheck = False
+                doBreak = False
+
+                if "subText" in dialogue[0].keys():
+                    pass
+                else:
+                    if "relation" in dialogue[0].keys():
+                        for emotion, value in dialogue[0]["relations"].items():
+                            if emotion in self.emotions.keys():
+                                if value >= self.emotions[emotion]:
+                                    passedCheck = True
+                                else:
+                                    passedCheck = False
+                                    doBreak = True
+                                    break
+                            else:
+                                raise ValueError(f"{emotion} not in emotions")
+
+                    if doBreak:
+                        continue
+
+                    if "world" in dialogue[0].keys():
+                        if checkIfHasAchievement(dialogue[0]["world"], needsAll=True):
+                            passedCheck = True
+
+                if passedCheck:
+                    pass
+
+dialogue = { # concept dialogue list
+    "currentDialogue":{
+        1: [
+            [["dslkgfsdlkgjslkg"], ["open up path(s)"]]
+        ],
+        2: [],
+        3: [],
+        4: [],
+        5: []
+    },
+    "possibleDialogue":{
+        1: [
+            [{"relation":{}, "world":{}}, ["dslkgfsdlkgjslkg"], ["open up path(s)"]]
+        ],
+        2: [],
+        3: [],
+        4: [],
+        5: []
+    }
+}
