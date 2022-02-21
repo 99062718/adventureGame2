@@ -33,11 +33,12 @@ from tkinter import StringVar, ttk
 # - Implement checkHasItem in character class
 # - Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
 # - Create dict with players accomplishments (did quest, beat boss, ect)
+#Turn button command into lambda function that links to function that finds the correct function to execute based on name
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
-class Characters:
+class Characters: #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
         self.__characterStats = {
             "name": characterData["name"],
@@ -47,7 +48,7 @@ class Characters:
             "items": characterData["items"] if "items" in characterData else {}
         }
 
-    def changeStat(self, changeHow, statToChange, value):
+    def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
         if statToChange in __characterStats:
             if changeHow == "set":
                 self.__characterStats[statToChange] = value
@@ -64,13 +65,13 @@ class Characters:
         else:
             raise ValueError(f"{statToChange} is not an existing stat")
 
-    def checkStat(self, statToCheck):
+    def checkStat(self, statToCheck): #Checks value of given stat
         if statToCheck in self.__characterStats:
             return self.__characterStats[statToCheck]
         else:
             raise ValueError(f"{statToCheck} is not an existing stat")
 
-    def checkHasItem(self, item, notHas):
+    def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
         pass
 
 playableCharacters = {
@@ -84,7 +85,7 @@ playableCharacters = {
     }
 }
 
-testRooms = {
+testRooms = { #This list is mostly used for me to visualize what creating rooms and such might look like
     "campaign": {
         "forest":[
             {
@@ -107,7 +108,7 @@ testRooms = {
 
 content = [[], []]
 
-def theContentDestroyer9000(content, deleteAll=False): #guess whos back. back again. not content thats for sure!
+def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back again. Not content thats for sure!
     for box in content[0]:
         box.destroy()
     content[0] = []
@@ -116,18 +117,18 @@ def theContentDestroyer9000(content, deleteAll=False): #guess whos back. back ag
             box.destroy()
         content[1] = []
 
-def contentCreator(roomContent):
-    num = [0, 0]
+def contentCreator(roomContent): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
+    num = 0
     playerAnswer = StringVar()
 
     theContentDestroyer9000(content)
 
     for currentContent in roomContent:
         for currentText in currentContent[1]:
-            if currentContent[0] == "text":
+            if currentContent[0] == "text": #Creates label
                 currentWidget = tkinter.Label(text=currentText)
-            elif currentContent[0] == "choice":
-                if "blockIf" in currentText:
+            elif currentContent[0] == "choice": #Creates radio button
+                if "blockIf" in currentText: #Checks if radio button should be shown or not
                     if checkIfHasAchievement(currentText["blockIf"]):
                         continue
                 
@@ -136,19 +137,22 @@ def contentCreator(roomContent):
                     value=currentText["data"][1],
                     variable=playerAnswer
                 )
-            elif currentContent[0] == "button":
+            elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText[0],
-                    command=currentText[1]
+                    command=currentText[1] #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
             
-            currentWidget.grid(column=0, row=num[0])
-            content[0].append(currentWidget)
-            num[0] += 1
+            if len(currentText) < 3:
+                currentWidget.grid(column=0, row=num)
+                num += 1
+            else:
+                currentWidget.place(bordermode=OUTSIDE, anchor="nw")
+            content[0 if len(currentText) < 3 else 1].append(currentWidget)
 
-def turnToNumber(value):
+def turnToNumber(value): #This is obsolete but im keeping it just to be sure
     try:
         value = float(value)
     except:
@@ -156,16 +160,16 @@ def turnToNumber(value):
     finally:
         return value
 
-def optionsMenu():
+def optionsMenu(): #Opens options menu
     pass
 
-def talkTo(character):
+def talkTo(character): #Open dialogue menu (can also include shop)
     pass
 
 def savePosition(): #Save in which area player resides
     pass
 
-def checkIfHasAchievement(toCheck, needsAll=False):
+def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
     hasAll = True
     for key in toCheck:
         if key == "hasItem":
@@ -177,7 +181,7 @@ def checkIfHasAchievement(toCheck, needsAll=False):
                     hasAll = False
                     break
         elif key == "onTeam":
-            for character in toCheck["onTeam"]:
+            for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
                 if character in playerTeam or isinstance(character, array) and character[0] not in playerTeam:
                     if not needsAll:
                         return True
@@ -185,7 +189,7 @@ def checkIfHasAchievement(toCheck, needsAll=False):
                     hasAll = False
                     break
         elif key == "defeatedBoss":
-            for boss in toCheck["defeatedBoss"]:
+            for boss in toCheck["defeatedBoss"]: #Checks if the player has defeated a given boss
                 if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss[0] not in playerAccomplishments["defeatedBosses"]:
                     if not needsAll:
                         return True
@@ -208,16 +212,17 @@ class npc:
         }
         self.recruitStats = recruitStats
 
-    def fullName(self):
+    def fullName(self): #Creates the full name of an npc
         return f"{self.firstName} {self.lastName}"
 
-    def hierarchyCheck(self):
-        for key, text in self.currentDialogue.items():
+    @staticmethod
+    def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
+        for key, text in dialogueList.items():
             if len(text) != 0:
                 return key
         raise ValueError("No dialogue found")
 
-    def checkForNewDialogue(self):
+    def checkForNewDialogue(self): #Checks for new dialogue to put into currentDialogue (not finished yet)
         for hierarchyTier in self.possibleDialogue:
             for dialogue in hierarchyTier:
                 passedCheck = False
