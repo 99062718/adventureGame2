@@ -1,3 +1,6 @@
+import tkinter
+from tkinter import StringVar, ttk
+
 #To do:
 #Create room system (Very important!!)
 # - Implement choice events into goTo instead of choices
@@ -30,6 +33,9 @@
 # - Implement checkHasItem in character class
 # - Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
 # - Create dict with players accomplishments (did quest, beat boss, ect)
+
+mainWindow = tkinter.Tk()
+mainWindow.configure(padx=50, pady=30)
 
 class Characters:
     def __init__(self, characterData):
@@ -99,39 +105,48 @@ testRooms = {
     }
 }
 
-def contentCreator(roomContent, noOptions=False):
+content = [[], []]
+
+def theContentDestroyer9000(content, deleteAll=False): #guess whos back. back again. not content thats for sure!
+    for box in content[0]:
+        box.destroy()
+    content[0] = []
+    if deleteAll:
+        for box in content[1]:
+            box.destroy()
+        content[1] = []
+
+def contentCreator(roomContent):
+    num = [0, 0]
+    playerAnswer = StringVar()
+
+    theContentDestroyer9000(content)
+
     for currentContent in roomContent:
-        if currentContent[0] == "text":
-            for currentText in currentContent[1]:
-                print(currentText)
-        elif currentContent[0] == "choice":
-            choiceInput(currentContent[1], noOptions)
-        else:
-            raise ValueError(f"{currentContent[0]} is not a valid widget")
-
-def choiceInput(choices, noOptions):
-    choicesToPrint = []
-
-    for choice in choices:
-        showChoice = True
-        if "blockIf" in choice:
-            if checkIfHasAchievement(choice["blockIf"]):
-                showChoice = False
-
-        if showChoice:
-            choicesToPrint.append(choice)
-
-    while True:
-        for loopNum, choice in enumerate(choicesToPrint):
-            print(f"{loopNum + 1}. {choice[0]}")
-        playerInput = input("Which one do you choose?\n").lower()
-        playerInput = turnToNumber(playerInput)
-        if isinstance(playerInput, float) and playerInput <= len(choicesToPrint):
-            return choicesToPrint[playerInput - 1]["data"][1]
-        elif playerInput == "options" and not noOptions:
-            optionsMenu()
-        else:
-            print(f"{playerInput} is not a valid choice")
+        for currentText in currentContent[1]:
+            if currentContent[0] == "text":
+                currentWidget = tkinter.Label(text=currentText)
+            elif currentContent[0] == "choice":
+                if "blockIf" in currentText:
+                    if checkIfHasAchievement(currentText["blockIf"]):
+                        continue
+                
+                currentWidget = ttk.Radiobutton(
+                    text=currentText["data"][0],
+                    value=currentText["data"][1],
+                    variable=playerAnswer
+                )
+            elif currentContent[0] == "button":
+                currentWidget = ttk.Button(
+                    text=currentText[0],
+                    command=currentText[1]
+                )
+            else:
+                raise ValueError(f"{currentContent[0]} is not a valid widget")
+            
+            currentWidget.grid(column=0, row=num[0])
+            content[0].append(currentWidget)
+            num[0] += 1
 
 def turnToNumber(value):
     try:
@@ -155,7 +170,7 @@ def checkIfHasAchievement(toCheck, needsAll=False):
     for key in toCheck:
         if key == "hasItem":
             for item in toCheck["hasItem"]: #This should loop through all characters within the team
-                if checkHasItem(item[0], "not" if isinstance(item, array) else "has"):
+                if checkHasItem(item[0] if isinstance(item, array) else item, "not" if isinstance(item, array) else "has"):
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -163,7 +178,7 @@ def checkIfHasAchievement(toCheck, needsAll=False):
                     break
         elif key == "onTeam":
             for character in toCheck["onTeam"]:
-                if character in playerTeam or isinstance(character, array) and character not in playerTeam:
+                if character in playerTeam or isinstance(character, array) and character[0] not in playerTeam:
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -171,7 +186,7 @@ def checkIfHasAchievement(toCheck, needsAll=False):
                     break
         elif key == "defeatedBoss":
             for boss in toCheck["defeatedBoss"]:
-                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss not in playerAccomplishments["defeatedBosses"]:
+                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss[0] not in playerAccomplishments["defeatedBosses"]:
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -253,3 +268,5 @@ dialogue = { # concept dialogue list
         5: []
     }
 }
+
+mainWindow.mainloop()
