@@ -1,5 +1,6 @@
 import tkinter
 from tkinter import StringVar, ttk
+from tkinter.constants import OUTSIDE
 
 #To do:
 #Create room system (Very important!!)
@@ -33,7 +34,6 @@ from tkinter import StringVar, ttk
 # - Implement checkHasItem in character class
 # - Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
 # - Create dict with players accomplishments (did quest, beat boss, ect)
-#Turn button command into lambda function that links to function that finds the correct function to execute based on name
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -140,7 +140,7 @@ def contentCreator(roomContent): #With the arival of lord contentDestroyer, only
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText[0],
-                    command=currentText[1] #Turn this into a lambda function
+                    command=lambda toUse = currentText[1] : funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
@@ -197,6 +197,10 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
                     hasAll = False
                     break
 
+
+def funcExecute(functionToUse): #executes whatever function we put into it. useful for dynamically creating buttons
+    if functionToUse in list(functionList.keys()):
+        functionList[functionToUse]()
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
@@ -272,6 +276,10 @@ dialogue = { # concept dialogue list
         4: [],
         5: []
     }
+}
+
+functionList = {
+    "example": "insert function to execute here"
 }
 
 mainWindow.mainloop()
