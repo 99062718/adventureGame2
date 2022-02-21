@@ -5,6 +5,10 @@ from tkinter.constants import OUTSIDE
 #To do:
 #Create room system (Very important!!)
 # - Implement choice events into goTo instead of choices
+# - Add battle roomType that can auto detect if its a normal or boss battle
+# - In battle roomType all that has to be entered in content are the enemies and the min/max amount there is supposed to be of them
+# - In boss roomType all that has to be entered in content is the boss and its dialogue
+# - Add both ifWin and ifLose into battle and boss
 #Create battle system (the line layer system) (Important)
 # - Npc attacks are controlled by the player
 # - If an entity stands on a higher line. Those on lines behind it cannot be attacked but can still attacked
@@ -101,6 +105,20 @@ testRooms = { #This list is mostly used for me to visualize what creating rooms 
                 "choiceEvent": {
                     "dave": ["talkTo", "dave"],
                     "exit": ["goTo", "forest", 5]
+                }
+            },
+            {
+                "roomType": "battle",
+                "content": {
+                    "enemies": {"evil dave": 3, "even more evil dave": 1}
+                }
+            },
+            {
+                "roomType": "battle",
+                "content": {
+                    "boss": ["henk"],
+                    "enemies": {"evil dave": 2},
+                    "text": ["bla bla evil plot bla bla"]
                 }
             }
         ]
