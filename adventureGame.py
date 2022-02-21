@@ -15,9 +15,9 @@ from tkinter.constants import OUTSIDE
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Npcs recruited can be put inside or removed from the team
-# - Implement functionality for passedCheck within checkForNewDialogue (should activate addDialogue)
-# - Implement addDialogue to add dialogue to currentDialogue dict
 # - Add possibility for shops
+# - Add ability to make certain choices open up new dialogue options
+# - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create inventory system (Normal importance)
 # - Items can be equipped from here
 #Create item support for characters (Normal importance)
@@ -29,6 +29,7 @@ from tkinter.constants import OUTSIDE
 #Create options menu with current zone, health, cheatcodes, ect (Parity)
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
+# - Create main menu when game is opened (has create new, load file and delete file on it)
 #Support for multiple campaigns (which can all have multiple characters) (Very Important!!)
 #Finish all player operated character functionalities
 # - Implement checkHasItem in character class
@@ -221,21 +222,21 @@ class npc:
 
     @staticmethod
     def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
-        for key, text in dialogueList.items():
+        for tier, text in enumerate(dialogueList):
             if len(text) != 0:
-                return key
+                return tier
         raise ValueError("No dialogue found")
 
     def checkForNewDialogue(self): #Checks for new dialogue to put into currentDialogue (not finished yet)
-        for hierarchyTier in self.possibleDialogue:
-            for dialogue in hierarchyTier:
+        for hierarchyTier, values in enumerate(self.possibleDialogue):
+            for dialogue in values[:]:
                 passedCheck = False
                 doBreak = False
 
                 if "subText" in dialogue[0].keys():
                     pass
                 else:
-                    if "relation" in dialogue[0].keys():
+                    if "relation" in dialogue[0].keys(): #Checks emotion npc has for player
                         for emotion, value in dialogue[0]["relations"].items():
                             if emotion in self.emotions.keys():
                                 if value >= self.emotions[emotion]:
@@ -250,32 +251,36 @@ class npc:
                     if doBreak:
                         continue
 
-                    if "world" in dialogue[0].keys():
+                    if "world" in dialogue[0].keys(): #Checks achievements player has accomplished
                         if checkIfHasAchievement(dialogue[0]["world"], needsAll=True):
                             passedCheck = True
 
                 if passedCheck:
-                    pass
+                    self.possibleDialogue[hierarchyTier].remove(dialogue)
+                    self.addDialogue(hierarchyTier, dialogue)
+
+    def addDialogue(self, tier, dialogue): #Adds dialogue to currentDialogue
+        self.currentDialogue[tier].append([dialogue[1], dialogue[2]])
 
 dialogue = { # concept dialogue list
-    "currentDialogue":{
-        1: [
+    "currentDialogue":[
+        [
             [["dslkgfsdlkgjslkg"], ["open up path(s)"]]
         ],
-        2: [],
-        3: [],
-        4: [],
-        5: []
-    },
-    "possibleDialogue":{
-        1: [
+        [],
+        [],
+        [],
+        []
+    ],
+    "possibleDialogue":[
+        [
             [{"relation":{}, "world":{}}, ["dslkgfsdlkgjslkg"], ["open up path(s)"]]
         ],
-        2: [],
-        3: [],
-        4: [],
-        5: []
-    }
+        [],
+        [],
+        [],
+        []
+    ]
 }
 
 functionList = {
