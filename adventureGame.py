@@ -1,5 +1,5 @@
 import tkinter
-from tkinter import StringVar, ttk
+from tkinter import StringVar, ttk, messagebox
 from tkinter.constants import OUTSIDE
 
 #To do:
@@ -102,7 +102,7 @@ testRooms = { #This list is mostly used for me to visualize what creating rooms 
                             "OnTeam": [["dave"]],
                             "defeatedBoss": ["john", ["big man the almighty"]]
                         }}]]],
-                "choiceEvent": {
+                "choiceEvents": {
                     "dave": ["talkTo", "dave"],
                     "exit": ["goTo", "forest", 5]
                 }
@@ -127,6 +127,22 @@ testRooms = { #This list is mostly used for me to visualize what creating rooms 
 
 content = [[], []]
 
+def roomTypeCheck(currentRoom): #Checks roomType of room
+    if currentRoom["roomType"] == "normal":
+        contentCreator(currentRoom["content"], currentRoom["choiceEvents"])
+    elif currentRoom["roomType"] == "battle":
+        battle(currentRoom["content"])
+    else:
+        raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
+
+def nextRoom(data): #Goes to next room
+    if data[0] in data[1].keys():
+        if data[1][data[0]][0] == "goTo": #Goes to given room (should also use saveData function)
+            currentRegion = [data[1][data[0]][1], data[1][data[0]][2]]
+            roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
+    else:
+        messagebox.showerror(message="Please select one of the choices")
+
 def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back again. Not content thats for sure!
     for box in content[0]:
         box.destroy()
@@ -136,7 +152,7 @@ def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back ag
             box.destroy()
         content[1] = []
 
-def contentCreator(roomContent): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
+def contentCreator(roomContent, choiceEvents=None): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
     num = 0
     playerAnswer = StringVar()
 
@@ -159,7 +175,7 @@ def contentCreator(roomContent): #With the arival of lord contentDestroyer, only
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText["data"][0],
-                    command=lambda toUse = currentText["data"][1] : funcExecute(toUse) #Turn this into a lambda function
+                    command=lambda toUse=currentText["data"][1], extraData=[playerAnswer, choiceEvents] if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
@@ -186,6 +202,9 @@ def talkTo(character): #Open dialogue menu (can also include shop)
     pass
 
 def savePosition(): #Save in which area player resides
+    pass
+
+def battle(roomContent): #Innitiates battle
     pass
 
 def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
@@ -217,9 +236,9 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
                     break
 
 
-def funcExecute(functionToUse): #executes whatever function we put into it. useful for dynamically creating buttons
+def funcExecute(functionToUse, extraData=None): #executes whatever function we put into it. useful for dynamically creating buttons
     if functionToUse in list(functionList.keys()):
-        functionList[functionToUse]()
+        functionList[functionToUse](extraData) if extraData else functionList[functionToUse]()
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
@@ -302,7 +321,8 @@ dialogue = { # concept dialogue list
 }
 
 functionList = {
-    "example": "insert function to execute here"
+    "example": "insert function to execute here",
+    "nextRoom": nextRoom
 }
 
 mainWindow.mainloop()
