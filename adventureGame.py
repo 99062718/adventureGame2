@@ -4,7 +4,6 @@ from tkinter.constants import OUTSIDE
 
 #To do:
 #Create room system (Very important!!)
-# - Implement choice events into goTo instead of choices
 # - Add battle roomType that can auto detect if its a normal or boss battle
 # - In battle roomType all that has to be entered in content are the enemies and the min/max amount there is supposed to be of them
 # - Add both ifWin and ifLose into battle
@@ -30,13 +29,11 @@ from tkinter.constants import OUTSIDE
 # - Bosses might be able to drop special items that can only be obtained from them
 # - Gold obtained from killing enemies should be a mix between random and set
 #Create options menu with current zone, health, cheatcodes, ect (Parity)
+# - Add ability to change line position per team member outside battle
+# - Inventory should also be accessible here
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
-# - Create main menu when game is opened (has create new, load file and delete file on it)
-#Support for multiple campaigns (which can all have multiple characters) (Very Important!!)
 #Finish all player operated character functionalities
-# - Implement checkHasItem in character class
-# - Create dict with all thus far recruited members. Also make a list in which all names of members that are currently in the party reside
 # - Create dict with players accomplishments (did quest, beat boss, ect)
 
 mainWindow = tkinter.Tk()
@@ -87,7 +84,7 @@ class person:
 
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
-        person.__init__(characterData)
+        person.__init__(self, characterData)
         self.__characterStats = {
             "inventory": characterData["inventory"] if "inventory" in characterData else {}
         }
@@ -98,9 +95,9 @@ class characters(person): #Used for characters that have been recruited or are p
             return True
         return False
 
-class enemies(person):
+class enemies(person): #Used for enemies currently in battle with
     def __init__(self, characterData):
-        person.__init__(characterData)
+        person.__init__(self, characterData)
 
 playableCharacters = {
     "campaign": {
@@ -149,6 +146,8 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
     },
     "2": 0
 }
+
+characterDict = {}
 content = [[], []]
 
 def roomTypeCheck(currentRoom): #Checks roomType of room
@@ -165,9 +164,10 @@ def nextRoom(data): #Goes to next room
         if data[playerAnswer.get()][0] == "goTo": #Goes to given room (should also use saveData function)
             currentRegion = [data[playerAnswer.get()][1], data[playerAnswer.get()][2]]
             roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
-        elif data[playerAnswer.get()][0] == "goTo": #Goes into dialogue menu with npc
+        elif data[playerAnswer.get()][0] == "talkTo": #Goes into dialogue menu with npc
             talkTo(playerAnswer.get())
     else:
+        print(playerAnswer.get(), data)
         messagebox.showerror(message="Please select one of the choices")
 
 def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back again. Not content thats for sure!
@@ -179,7 +179,7 @@ def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back ag
             box.destroy()
         content[1] = []
 
-def contentCreator(roomContent, choiceEvents=None): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
+def contentCreator(roomContent, extraData=None): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
     global playerAnswer
     num = 0
     playerAnswer = StringVar()
@@ -203,7 +203,7 @@ def contentCreator(roomContent, choiceEvents=None): #With the arival of lord con
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText["data"][0],
-                    command=lambda toUse=currentText["data"][1], extraData=choiceEvents if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
+                    command=lambda toUse=currentText["data"][1], extraData=extraData if extraData else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
@@ -380,7 +380,7 @@ def loadCampaign():
     if playerAnswer.get():
         addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
         nextRoom({
-                currentCampaign: ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
+                playerAnswer.get(): ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
             }
         )
 
@@ -388,6 +388,7 @@ functionList = {
     "example": "insert function to execute here",
     "nextRoom": nextRoom,
     "newGame": newGame,
+    "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign
 }
 
