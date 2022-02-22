@@ -68,7 +68,10 @@ class Characters: #Used for characters that have been recruited or are present w
             elif changeHow == "subtract":
                 self.__characterStats[statToChange] -= value
             elif changeHow == "append":
-                self.__characterStats[statToChange].append(value)
+                if isinstance(value, dict):
+                    self.__characterStats[statToChange][list(value.keys())[0]] = value
+                else:
+                    self.__characterStats[statToChange].append(value)
             elif changeHow == "remove":
                 self.__characterStats[statToChange].remove(value)
             else:
@@ -88,6 +91,7 @@ class Characters: #Used for characters that have been recruited or are present w
 playableCharacters = {
     "campaign": {
         "hero": {
+            "name": "hero the 4th",
             "health": 10,
             "attacks": {
                 "blazing sun": 25
@@ -250,12 +254,15 @@ def funcExecute(functionToUse, extraData=None): #executes whatever function we p
     if functionToUse in list(functionList.keys()):
         functionList[functionToUse](extraData) if extraData else functionList[functionToUse]()
 
+def addToCharacterDict(toAdd):
+    global characterDict
+    characterDict[toAdd["name"]] = Characters(toAdd)
+
 #--------------------------------------------------------------------------------Dialogue system stuff
 
 class npc:
     def __init__(self, characterInfo, currentDialogue, possibleDialogue, recruitStats=None):
-        self.firstName = characterInfo[0]
-        self.lastName = characterInfo[1]
+        self.name = characterInfo
         self.dialogue = dialogue
         self.emotions = {
             "anger": 0,
@@ -263,9 +270,6 @@ class npc:
             "sadness": 0
         }
         self.recruitStats = recruitStats
-
-    def fullName(self): #Creates the full name of an npc
-        return f"{self.firstName} {self.lastName}"
 
     @staticmethod
     def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
@@ -344,13 +348,23 @@ def newGame():
         ["choice", [
             {"data": [x, x]} for x in campaigns.keys()
         ]],
-        ["button", [{"data": ["Choose campaign", "loadCampaign"]}]]
+        ["button", [{"data": ["Choose campaign", "chooseCharacter"]}]]
     ])
 
-def loadCampaign():
+def chooseCharacter():
     global currentCampaign
     if playerAnswer.get():
         currentCampaign = playerAnswer.get()
+        contentCreator([
+            ["choice", [
+                {"data": [x, x]} for x in playableCharacters[currentCampaign].keys()
+            ]],
+            ["button", [{"data": ["Choose character", "loadCampaign"]}]]
+        ])
+
+def loadCampaign():
+    if playerAnswer.get():
+        addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
         nextRoom({
                 currentCampaign: ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
             }
