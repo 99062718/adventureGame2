@@ -125,8 +125,6 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
     },
     "2": 0
 }
-
-currentCampaign = "insert campaign here"
 content = [[], []]
 
 def roomTypeCheck(currentRoom): #Checks roomType of room
@@ -138,9 +136,10 @@ def roomTypeCheck(currentRoom): #Checks roomType of room
         raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
 
 def nextRoom(data): #Goes to next room
-    if data[0] in data[1].keys():
-        if data[1][data[0]][0] == "goTo": #Goes to given room (should also use saveData function)
-            currentRegion = [data[1][data[0]][1], data[1][data[0]][2]]
+    global currentRegion
+    if playerAnswer.get() in data.keys():
+        if data[playerAnswer.get()][0] == "goTo": #Goes to given room (should also use saveData function)
+            currentRegion = [data[playerAnswer.get()][1], data[playerAnswer.get()][2]]
             roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
     else:
         messagebox.showerror(message="Please select one of the choices")
@@ -155,6 +154,7 @@ def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back ag
         content[1] = []
 
 def contentCreator(roomContent, choiceEvents=None): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
+    global playerAnswer
     num = 0
     playerAnswer = StringVar()
 
@@ -177,7 +177,7 @@ def contentCreator(roomContent, choiceEvents=None): #With the arival of lord con
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText["data"][0],
-                    command=lambda toUse=currentText["data"][1], extraData=[playerAnswer.get(), choiceEvents] if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
+                    command=lambda toUse=currentText["data"][1], extraData=choiceEvents if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
@@ -203,7 +203,7 @@ def optionsMenu(): #Opens options menu
 def talkTo(character): #Open dialogue menu (can also include shop)
     pass
 
-def savePosition(): #Save in which area player resides
+def savePosition(): #Save run data
     pass
 
 def battle(roomContent): #Innitiates battle
@@ -339,10 +339,20 @@ def newGame():
         ["button", [{"data": ["Choose campaign", "loadCampaign"]}]]
     ])
 
+def loadCampaign():
+    global currentCampaign
+    if playerAnswer.get():
+        currentCampaign = playerAnswer.get()
+        nextRoom({
+                currentCampaign: ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
+            }
+        )
+
 functionList = {
     "example": "insert function to execute here",
     "nextRoom": nextRoom,
-    "newGame": newGame
+    "newGame": newGame,
+    "loadCampaign": loadCampaign
 }
 
 mainMenu()
