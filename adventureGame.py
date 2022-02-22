@@ -42,21 +42,21 @@ from tkinter.constants import OUTSIDE
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
-class Characters: #Used for characters that have been recruited or are present within the team
+class person:
     def __init__(self, characterData):
         self.__characterStats = {
             "name": characterData["name"],
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
             "attacks": characterData["attacks"] if "attacks" in characterData else {},
-            "inventory": characterData["inventory"] if "inventory" in characterData else {},
             "left": characterData["left"] if "left" in characterData else None,
             "right": characterData["right"] if "right" in characterData else None,
             "head": characterData["head"] if "head" in characterData else None,
             "chest": characterData["chest"] if "chest" in characterData else None,
             "legs": characterData["legs"] if "legs" in characterData else None,
             "feet": characterData["feet"] if "feet" in characterData else None,
-            "amulet": characterData["amulet"] if "amulet" in characterData else None
+            "amulet": characterData["amulet"] if "amulet" in characterData else None,
+            "onLine": characterData["onLine"] if "onLine" in characterData else 0
         }
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -85,8 +85,22 @@ class Characters: #Used for characters that have been recruited or are present w
         else:
             raise ValueError(f"{statToCheck} is not an existing stat")
 
+class characters(person): #Used for characters that have been recruited or are present within the team
+    def __init__(self, characterData):
+        person.__init__(characterData)
+        self.__characterStats = {
+            "inventory": characterData["inventory"] if "inventory" in characterData else {}
+        }
+
     def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
-        pass
+        inInventory = self.checkStat("inventory").keys()
+        if item in inInventory and notHas or item not in inInventory and notHas == "not":
+            return True
+        return False
+
+class enemies(person):
+    def __init__(self, characterData):
+        person.__init__(characterData)
 
 playableCharacters = {
     "campaign": {
@@ -120,14 +134,14 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
             {
                 "roomType": "battle",
                 "content": {
-                    "enemies": {"evil dave": 3, "even more evil dave": 1}
+                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
                 }
             },
             {
                 "roomType": "battle",
                 "content": {
                     "boss": ["henk"],
-                    "enemies": {"evil dave": 2},
+                    "enemies": {"evil dave": {"timesAppear": 2}},
                     "text": ["bla bla evil plot bla bla"]
                 }
             }
@@ -256,7 +270,7 @@ def funcExecute(functionToUse, extraData=None): #executes whatever function we p
 
 def addToCharacterDict(toAdd):
     global characterDict
-    characterDict[toAdd["name"]] = Characters(toAdd)
+    characterDict[toAdd["name"]] = characters(toAdd)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
