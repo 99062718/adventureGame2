@@ -90,7 +90,7 @@ playableCharacters = {
     }
 }
 
-testRooms = { #This list is mostly used for me to visualize what creating rooms and such might look like
+campaigns = { #This list is mostly used for me to visualize what creating rooms and such might look like
     "campaign": {
         "forest":[
             {
@@ -122,9 +122,11 @@ testRooms = { #This list is mostly used for me to visualize what creating rooms 
                 }
             }
         ]
-    }
+    },
+    "2": 0
 }
 
+currentCampaign = "insert campaign here"
 content = [[], []]
 
 def roomTypeCheck(currentRoom): #Checks roomType of room
@@ -175,7 +177,7 @@ def contentCreator(roomContent, choiceEvents=None): #With the arival of lord con
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
                     text=currentText["data"][0],
-                    command=lambda toUse=currentText["data"][1], extraData=[playerAnswer, choiceEvents] if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
+                    command=lambda toUse=currentText["data"][1], extraData=[playerAnswer.get(), choiceEvents] if choiceEvents else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
@@ -212,7 +214,7 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
     for key in toCheck:
         if key == "hasItem":
             for item in toCheck["hasItem"]: #This should loop through all characters within the team
-                if checkHasItem(item[0] if isinstance(item, array) else item, "not" if isinstance(item, array) else "has"):
+                if checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -220,7 +222,7 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
                     break
         elif key == "onTeam":
             for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
-                if character in playerTeam or isinstance(character, array) and character[0] not in playerTeam:
+                if character in playerTeam or isinstance(character, list) and character[0] not in playerTeam:
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -228,7 +230,7 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
                     break
         elif key == "defeatedBoss":
             for boss in toCheck["defeatedBoss"]: #Checks if the player has defeated a given boss
-                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, array) and boss[0] not in playerAccomplishments["defeatedBosses"]:
+                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, list) and boss[0] not in playerAccomplishments["defeatedBosses"]:
                     if not needsAll:
                         return True
                 elif needsAll:
@@ -320,9 +322,29 @@ dialogue = { # concept dialogue list
     ]
 }
 
+#--------------------------------------------------------------------------------Main menu stuff
+
+def mainMenu():
+    contentCreator([
+        ["button", [
+            {"data": ["New game", "newGame"]}, {"data": ["Load save", "loadSave"]}, {"data": ["Delete save", "deleteSave"]}
+        ]]
+    ])
+
+def newGame():
+    contentCreator([
+        ["choice", [
+            {"data": [x, x]} for x in campaigns.keys()
+        ]],
+        ["button", [{"data": ["Choose campaign", "loadCampaign"]}]]
+    ])
+
 functionList = {
     "example": "insert function to execute here",
-    "nextRoom": nextRoom
+    "nextRoom": nextRoom,
+    "newGame": newGame
 }
+
+mainMenu()
 
 mainWindow.mainloop()
