@@ -54,7 +54,7 @@ class Characters: #Used for characters that have been recruited or are present w
         }
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
-        if statToChange in __characterStats:
+        if statToChange in self.__characterStats:
             if changeHow == "set":
                 self.__characterStats[statToChange] = value
             elif changeHow == "add":
@@ -144,13 +144,13 @@ def contentCreator(roomContent): #With the arival of lord contentDestroyer, only
 
     for currentContent in roomContent:
         for currentText in currentContent[1]:
+            if "blockIf" in currentText: #Checks if widget should be shown or not
+                if checkIfHasAchievement(currentText["blockIf"]):
+                    continue
+
             if currentContent[0] == "text": #Creates label
-                currentWidget = tkinter.Label(text=currentText)
-            elif currentContent[0] == "choice": #Creates radio button
-                if "blockIf" in currentText: #Checks if radio button should be shown or not
-                    if checkIfHasAchievement(currentText["blockIf"]):
-                        continue
-                
+                currentWidget = tkinter.Label(text=currentText["data"])
+            elif currentContent[0] == "choice": #Creates radio button       
                 currentWidget = ttk.Radiobutton(
                     text=currentText["data"][0],
                     value=currentText["data"][1],
@@ -158,18 +158,18 @@ def contentCreator(roomContent): #With the arival of lord contentDestroyer, only
                 )
             elif currentContent[0] == "button": #Creates button
                 currentWidget = ttk.Button(
-                    text=currentText[0],
-                    command=lambda toUse = currentText[1] : funcExecute(toUse) #Turn this into a lambda function
+                    text=currentText["data"][0],
+                    command=lambda toUse = currentText["data"][1] : funcExecute(toUse) #Turn this into a lambda function
                 )
             else:
                 raise ValueError(f"{currentContent[0]} is not a valid widget")
             
-            if len(currentText) < 3:
+            if len(currentText["data"]) < 3:
                 currentWidget.grid(column=0, row=num)
                 num += 1
             else:
                 currentWidget.place(bordermode=OUTSIDE, anchor="nw")
-            content[0 if len(currentText) < 3 else 1].append(currentWidget)
+            content[0 if len(currentText["data"]) < 3 else 1].append(currentWidget)
 
 def turnToNumber(value): #This is obsolete but im keeping it just to be sure
     try:
