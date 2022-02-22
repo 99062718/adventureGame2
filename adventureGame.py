@@ -36,6 +36,8 @@ from tkinter.constants import OUTSIDE
 #Finish all player operated character functionalities
 # - Create dict with players accomplishments (did quest, beat boss, ect)
 
+#URGENT!!!! critical bug within classes where values cant be added to dicts. I have no idea why i can edit values within the dict but not add to them
+
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
@@ -84,10 +86,8 @@ class person:
 
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
-        person.__init__(self, characterData)
-        self.__characterStats = {
-            "inventory": characterData["inventory"] if "inventory" in characterData else {}
-        }
+        super().__init__(characterData)
+        self.__characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else {}
 
     def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
         inInventory = self.checkStat("inventory").keys()
@@ -97,7 +97,7 @@ class characters(person): #Used for characters that have been recruited or are p
 
 class enemies(person): #Used for enemies currently in battle with
     def __init__(self, characterData):
-        person.__init__(self, characterData)
+        super().__init__(characterData)
 
 playableCharacters = {
     "campaign": {
@@ -106,7 +106,8 @@ playableCharacters = {
             "health": 10,
             "attacks": {
                 "blazing sun": 25
-            }
+            },
+            "inventory": {"big sword": 2}
         }
     }
 }
@@ -240,12 +241,13 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
     for key in toCheck:
         if key == "hasItem":
             for item in toCheck["hasItem"]: #This should loop through all characters within the team
-                if checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
-                    if not needsAll:
-                        return True
-                elif needsAll:
-                    hasAll = False
-                    break
+                for character in characterDict:
+                    if characterDict[character].checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
+                        if not needsAll:
+                            return True
+                    elif needsAll:
+                        hasAll = False
+                        break
         elif key == "onTeam":
             for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
                 if character in playerTeam or isinstance(character, list) and character[0] not in playerTeam:
