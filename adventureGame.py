@@ -7,8 +7,7 @@ from tkinter.constants import OUTSIDE
 # - Implement choice events into goTo instead of choices
 # - Add battle roomType that can auto detect if its a normal or boss battle
 # - In battle roomType all that has to be entered in content are the enemies and the min/max amount there is supposed to be of them
-# - In boss roomType all that has to be entered in content is the boss and its dialogue
-# - Add both ifWin and ifLose into battle and boss
+# - Add both ifWin and ifLose into battle
 #Create battle system (the line layer system) (Important)
 # - Npc attacks are controlled by the player
 # - If an entity stands on a higher line. Those on lines behind it cannot be attacked but can still attacked
@@ -50,7 +49,14 @@ class Characters: #Used for characters that have been recruited or are present w
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
             "attacks": characterData["attacks"] if "attacks" in characterData else {},
-            "items": characterData["items"] if "items" in characterData else {}
+            "inventory": characterData["inventory"] if "inventory" in characterData else {},
+            "left": characterData["left"] if "left" in characterData else None,
+            "right": characterData["right"] if "right" in characterData else None,
+            "head": characterData["head"] if "head" in characterData else None,
+            "chest": characterData["chest"] if "chest" in characterData else None,
+            "legs": characterData["legs"] if "legs" in characterData else None,
+            "feet": characterData["feet"] if "feet" in characterData else None,
+            "amulet": characterData["amulet"] if "amulet" in characterData else None
         }
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -141,6 +147,8 @@ def nextRoom(data): #Goes to next room
         if data[playerAnswer.get()][0] == "goTo": #Goes to given room (should also use saveData function)
             currentRegion = [data[playerAnswer.get()][1], data[playerAnswer.get()][2]]
             roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
+        elif data[playerAnswer.get()][0] == "goTo": #Goes into dialogue menu with npc
+            talkTo(playerAnswer.get())
     else:
         messagebox.showerror(message="Please select one of the choices")
 
