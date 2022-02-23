@@ -36,14 +36,12 @@ from tkinter.constants import OUTSIDE
 #Finish all player operated character functionalities
 # - Create dict with players accomplishments (did quest, beat boss, ect)
 
-#URGENT!!!! critical bug within classes where values cant be added to dicts. I have no idea why i can edit values within the dict but not add to them
-
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
 class person:
     def __init__(self, characterData):
-        self.__characterStats = {
+        self._characterStats = {
             "name": characterData["name"],
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
@@ -59,35 +57,35 @@ class person:
         }
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
-        if statToChange in self.__characterStats:
+        if statToChange in self._characterStats:
             if changeHow == "set":
-                self.__characterStats[statToChange] = value
+                self._characterStats[statToChange] = value
             elif changeHow == "add":
-                self.__characterStats[statToChange] += value
+                self._characterStats[statToChange] += value
             elif changeHow == "subtract":
-                self.__characterStats[statToChange] -= value
+                self._characterStats[statToChange] -= value
             elif changeHow == "append":
                 if isinstance(value, dict):
-                    self.__characterStats[statToChange][list(value.keys())[0]] = value
+                    self._characterStats[statToChange][list(value.keys())[0]] = value
                 else:
-                    self.__characterStats[statToChange].append(value)
+                    self._characterStats[statToChange].append(value)
             elif changeHow == "remove":
-                self.__characterStats[statToChange].remove(value)
+                self._characterStats[statToChange].remove(value)
             else:
                 raise ValueError(f"{changeHow} is not a valid way to change stat")
         else:
             raise ValueError(f"{statToChange} is not an existing stat")
 
     def checkStat(self, statToCheck): #Checks value of given stat
-        if statToCheck in self.__characterStats:
-            return self.__characterStats[statToCheck]
+        if statToCheck in self._characterStats:
+            return self._characterStats[statToCheck]
         else:
             raise ValueError(f"{statToCheck} is not an existing stat")
 
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
         super().__init__(characterData)
-        self.__characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else {}
+        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else {}
 
     def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
         inInventory = self.checkStat("inventory").keys()
