@@ -16,7 +16,7 @@ from tkinter.constants import OUTSIDE
 # - Every character has mana. Some attacks take mana and others dont. If mana reaches 0 the mana attacks cannot be used anymore
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
-# - Npcs recruited can be put inside or removed from the team
+# - Npcs recruited can be put inside or removed from the team (almost done)
 # - Add possibility for shops
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
@@ -32,11 +32,8 @@ from tkinter.constants import OUTSIDE
 # - Gold obtained from killing enemies should be a mix between random and set
 #Create settings menu with current zone, health, cheatcodes, ect (Parity)
 # - Add ability to change line position per team member outside battle
-# - Inventory should also be accessible here
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
-#Finish all player operated character functionalities
-# - Create dict with players accomplishments (did quest, beat boss, ect)
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -77,7 +74,7 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
             },
             {
                 "roomType": "battle",
-                "content": {
+                "content": { #Perhaps some kind of template system would be nice alongside this so frequenly used enemy combos can be easily reused
                     "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
                 }
             },
@@ -95,7 +92,6 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
 }
 
 characterDict = {}
-onTeam = [] #Add all current team members to this list
 playerAccomplishments = { #Add all player accomplishments (like beating a boss) to this
     "defeatedBosses": []
 }
@@ -104,6 +100,8 @@ content = [[], []]
 #--------------------------------------------------------------------------------Characters and enemies
 
 class person: #Creates class from which characters and enemies inherit
+    onTeam = [] #Add all current team members to this list
+
     def __init__(self, characterData):
         self._characterStats = {
             "name": characterData["name"],
@@ -152,6 +150,15 @@ class person: #Creates class from which characters and enemies inherit
     def setItem(self, bodyPart, item): #Sets item of given bodypart
         self._characterStats["equippedItems"][bodyPart] = item
 
+    @classmethod
+    def changeTeam(cls, addOrRemove="add"):
+        if addOrRemove == "add":
+            cls.onTeam.append(playerAnswer.get())
+        else:
+            cls.onTeam.remove(playerAnswer.get())
+
+#-------------------------------------------------Characters
+
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
         super().__init__(characterData)
@@ -169,6 +176,25 @@ class characters(person): #Used for characters that have been recruited or are p
 def addToCharacterDict(toAdd): #Adds newly recruited people to character class and characterDict
     global characterDict
     characterDict[toAdd["name"]] = characters(toAdd)
+
+#-------------------------------------------------Character base
+
+def goToBase(): #Goes to player base where team members can be swapped out
+    contentCreator([
+        ["text", [{"data": ["Welcome to the base!"]}]],
+        ["button",[
+            {"data": ["Add to team", "addToTeamMenu"]}
+        ]]
+    ])
+
+def addToTeamMenu(): #Player can choose what character they want to add to their team
+    contentCreator([ #Continue work on this later
+        ["text", [{"data": ["Which character would you like to add to your party?"]}]],
+        ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]]
+        ["button", [{"data": ["Choose character", "addToTeam"]}]]
+    ])
+
+#-------------------------------------------------Enemies
 
 class enemies(person): #Used for enemies currently in battle with
     def __init__(self, characterData):
@@ -192,6 +218,8 @@ def nextRoom(data): #Goes to next room
             roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
         elif data[playerAnswer.get()][0] == "talkTo": #Goes into dialogue menu with npc
             talkTo(playerAnswer.get())
+        elif data[playerAnswer.get()][0] == "base": #Goes to player base
+            goToBase()
     else:
         print(playerAnswer.get(), data)
         messagebox.showerror(message="Please select one of the choices")
@@ -386,7 +414,8 @@ functionList = {
     "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
-    "exitSettings": exitSettings
+    "exitSettings": exitSettings,
+    "addToTeamMenu": addToTeamMenu
 }
 
 #--------------------------------------------------------------------------------Not catagorized yet
@@ -422,7 +451,7 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
                         break
         elif key == "onTeam":
             for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
-                if character in playerTeam or isinstance(character, list) and character[0] not in playerTeam:
+                if character in characters.onTeam or isinstance(character, list) and character[0] not in characters.onTeam:
                     if not needsAll:
                         return True
                 elif needsAll:
