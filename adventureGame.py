@@ -22,6 +22,8 @@ from tkinter.constants import OUTSIDE
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create inventory system (Normal importance)
 # - Items can be equipped from here
+# - Inventories should be able to be accessed from each team member
+# - Items should be able to be transferred from inventory to inventory
 #Create item support for characters (Normal importance)
 # - Items can give special bonusses like +atk, +def or +agility but can also give special bonusses like extra attack done to wolf enemies
 # - Items maybe can have a kind of debuff attached to them like -2 def or extra damage taken from wolf enemies
@@ -39,72 +41,7 @@ from tkinter.constants import OUTSIDE
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
-class person:
-    def __init__(self, characterData):
-        self._characterStats = {
-            "name": characterData["name"],
-            "health": characterData["health"],
-            "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
-            "attacks": characterData["attacks"] if "attacks" in characterData else {},
-            "onLine": characterData["onLine"] if "onLine" in characterData else 0,
-            "equippedItems": {
-                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"] else None,
-                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"] else None,
-                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"] else None,
-                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"] else None,
-                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"] else None,
-                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"] else None,
-                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"] else None
-            }
-        }
-
-
-    def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
-        if statToChange in self._characterStats:
-            if changeHow == "set":
-                self._characterStats[statToChange] = value
-            elif changeHow == "add":
-                self._characterStats[statToChange] += value
-            elif changeHow == "subtract":
-                self._characterStats[statToChange] -= value
-            elif changeHow == "append":
-                if isinstance(value, dict):
-                    self._characterStats[statToChange][list(value.keys())[0]] = value
-                else:
-                    self._characterStats[statToChange].append(value)
-            elif changeHow == "remove":
-                self._characterStats[statToChange].remove(value)
-            else:
-                raise ValueError(f"{changeHow} is not a valid way to change stat")
-        else:
-            raise ValueError(f"{statToChange} is not an existing stat")
-
-    def checkStat(self, statToCheck): #Checks value of given stat
-        if statToCheck in self._characterStats:
-            return self._characterStats[statToCheck]
-        else:
-            raise ValueError(f"{statToCheck} is not an existing stat")
-
-    def setItem(self, bodyPart, item):
-        self._characterStats["equippedItems"][bodyPart] == item
-
-class characters(person): #Used for characters that have been recruited or are present within the team
-    def __init__(self, characterData):
-        super().__init__(characterData)
-        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else []
-        for bodyPart, value in self._characterStats["equippedItems"].items():
-            if value:
-                self._characterStats["inventory"].append(value)
-
-    def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
-        inInventory = self.checkStat("inventory")
-        if item in inInventory and notHas == "has" or item not in inInventory and notHas == "not":
-            return True
-        return False
-
-class enemies(person): #Used for enemies currently in battle with
-    def __init__(self, characterData):
-        super().__init__(characterData)
+#--------------------------------------------------------------------------------Dictionaries
 
 playableCharacters = {
     "campaign": {
@@ -158,7 +95,86 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
 }
 
 characterDict = {}
+onTeam = [] #Add all current team members to this list
+playerAccomplishments = { #Add all player accomplishments (like beating a boss) to this
+    "defeatedBosses": []
+}
 content = [[], []]
+
+#--------------------------------------------------------------------------------Characters and enemies
+
+class person: #Creates class from which characters and enemies inherit
+    def __init__(self, characterData):
+        self._characterStats = {
+            "name": characterData["name"],
+            "health": characterData["health"],
+            "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
+            "attacks": characterData["attacks"] if "attacks" in characterData else {},
+            "onLine": characterData["onLine"] if "onLine" in characterData else 0,
+            "equippedItems": {
+                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"] else None,
+                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"] else None,
+                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"] else None,
+                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"] else None,
+                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"] else None,
+                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"] else None,
+                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"] else None
+            }
+        }
+
+
+    def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
+        if statToChange in self._characterStats:
+            if changeHow == "set":
+                self._characterStats[statToChange] = value
+            elif changeHow == "add":
+                self._characterStats[statToChange] += value
+            elif changeHow == "subtract":
+                self._characterStats[statToChange] -= value
+            elif changeHow == "append":
+                if isinstance(value, dict):
+                    self._characterStats[statToChange][list(value.keys())[0]] = value
+                else:
+                    self._characterStats[statToChange].append(value)
+            elif changeHow == "remove":
+                self._characterStats[statToChange].remove(value)
+            else:
+                raise ValueError(f"{changeHow} is not a valid way to change stat")
+        else:
+            raise ValueError(f"{statToChange} is not an existing stat")
+
+    def checkStat(self, statToCheck): #Checks value of given stat
+        if statToCheck in self._characterStats:
+            return self._characterStats[statToCheck]
+        else:
+            raise ValueError(f"{statToCheck} is not an existing stat")
+
+    def setItem(self, bodyPart, item): #Sets item of given bodypart
+        self._characterStats["equippedItems"][bodyPart] = item
+
+class characters(person): #Used for characters that have been recruited or are present within the team
+    def __init__(self, characterData):
+        super().__init__(characterData)
+        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else []
+        for bodyPart, value in self._characterStats["equippedItems"].items(): #Adds all currently equipped items to inventory
+            if value:
+                self._characterStats["inventory"].append(value)
+
+    def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
+        inInventory = self.checkStat("inventory")
+        if item in inInventory and notHas == "has" or item not in inInventory and notHas == "not":
+            return True
+        return False
+
+def addToCharacterDict(toAdd): #Adds newly recruited people to character class and characterDict
+    global characterDict
+    characterDict[toAdd["name"]] = characters(toAdd)
+
+class enemies(person): #Used for enemies currently in battle with
+    def __init__(self, characterData):
+        super().__init__(characterData)
+
+#--------------------------------------------------------------------------------Room generation
 
 def roomTypeCheck(currentRoom): #Checks roomType of room
     if currentRoom["roomType"] == "normal":
@@ -225,73 +241,20 @@ def contentCreator(roomContent, extraData=None): #With the arival of lord conten
                 currentWidget.place(bordermode=OUTSIDE, anchor="nw")
             content[0 if len(currentText["data"]) < 3 else 1].append(currentWidget)
 
-def turnToNumber(value): #This is obsolete but im keeping it just to be sure
-    try:
-        value = float(value)
-    except:
-        return value
-    finally:
-        return value
-
-def talkTo(character): #Open dialogue menu (can also include shop)
-    pass
-
-def savePosition(): #Save run data
-    pass
-
-def battle(roomContent, choiceEvents): #Innitiates battle
-    pass
-
-def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
-    hasAll = True
-    for key in toCheck:
-        if key == "hasItem":
-            for item in toCheck["hasItem"]: #This should loop through all characters within the team
-                for character in characterDict:
-                    if characterDict[character].checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
-                        if not needsAll:
-                            return True
-                    elif needsAll:
-                        hasAll = False
-                        break
-        elif key == "onTeam":
-            for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
-                if character in playerTeam or isinstance(character, list) and character[0] not in playerTeam:
-                    if not needsAll:
-                        return True
-                elif needsAll:
-                    hasAll = False
-                    break
-        elif key == "defeatedBoss":
-            for boss in toCheck["defeatedBoss"]: #Checks if the player has defeated a given boss
-                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, list) and boss[0] not in playerAccomplishments["defeatedBosses"]:
-                    if not needsAll:
-                        return True
-                elif needsAll:
-                    hasAll = False
-                    break
-
-
-def funcExecute(functionToUse, extraData=None): #executes whatever function we put into it. useful for dynamically creating buttons
-    if functionToUse in list(functionList.keys()):
-        functionList[functionToUse](extraData) if extraData else functionList[functionToUse]()
-
-def addToCharacterDict(toAdd):
-    global characterDict
-    characterDict[toAdd["name"]] = characters(toAdd)
-
 #--------------------------------------------------------------------------------Dialogue system stuff
 
-class npc:
-    def __init__(self, characterInfo, currentDialogue, possibleDialogue, recruitStats=None):
-        self.name = characterInfo
-        self.dialogue = dialogue
+class npc: #Npc which can be recruited, talked to or bought things from
+    def __init__(self, characterInfo):
+        self.name = characterInfo["name"]
+        self.currentDialogue = characterInfo["currentDialogue"]
+        self.possibleDialogue = characterInfo["possibleDialogue"]
         self.emotions = {
             "anger": 0,
             "happiness": 0,
             "sadness": 0
-        }
-        self.recruitStats = recruitStats
+        } if not characterInfo["emotions"] else characterInfo["emotions"]
+        self.recruitStats = characterInfo["recruitStats"] if characterInfo["recruitStats"] else None
+        self.recruitCriteria = characterInfo["recruitCriteria"] if characterInfo["recruitCriteria"] else None
 
     @staticmethod
     def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
@@ -369,7 +332,7 @@ def openSettingsMenu(): #Opens settings menu
         ]]
     ])
 
-def exitSettings():
+def exitSettings(): #Exists settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
     roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
@@ -411,8 +374,13 @@ def loadCampaign(): #Starts that campaign
             }
         )
 
+#--------------------------------------------------------------------------------Automatic function execution
+
+def funcExecute(functionToUse, extraData=None): #executes whatever function we put into it. useful for dynamically creating buttons
+    if functionToUse in list(functionList.keys()):
+        functionList[functionToUse](extraData) if extraData else functionList[functionToUse]()
+
 functionList = {
-    "example": "insert function to execute here",
     "nextRoom": nextRoom,
     "newGame": newGame,
     "chooseCharacter": chooseCharacter,
@@ -420,6 +388,56 @@ functionList = {
     "openSettingsMenu": openSettingsMenu,
     "exitSettings": exitSettings
 }
+
+#--------------------------------------------------------------------------------Not catagorized yet
+
+def turnToNumber(value): #This is obsolete but im keeping it just to be sure
+    try:
+        value = float(value)
+    except:
+        return value
+    finally:
+        return value
+
+def talkTo(character): #Open dialogue menu (can also include shop)
+    pass
+
+def savePosition(): #Save run data
+    pass
+
+def battle(roomContent, choiceEvents): #Innitiates battle
+    pass
+
+def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
+    hasAll = True
+    for key in toCheck:
+        if key == "hasItem":
+            for item in toCheck["hasItem"]: #This should loop through all characters within the team
+                for character in characterDict:
+                    if characterDict[character].checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
+                        if not needsAll:
+                            return True
+                    elif needsAll:
+                        hasAll = False
+                        break
+        elif key == "onTeam":
+            for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
+                if character in playerTeam or isinstance(character, list) and character[0] not in playerTeam:
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
+        elif key == "defeatedBoss":
+            for boss in toCheck["defeatedBoss"]: #Checks if the player has defeated a given boss
+                if boss in playerAccomplishments["defeatedBosses"] or isinstance(boss, list) and boss[0] not in playerAccomplishments["defeatedBosses"]:
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
+
+#--------------------------------------------------------------------------------Start of game
 
 mainMenu()
 
