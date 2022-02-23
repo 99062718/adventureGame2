@@ -28,7 +28,7 @@ from tkinter.constants import OUTSIDE
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
 # - Bosses might be able to drop special items that can only be obtained from them
 # - Gold obtained from killing enemies should be a mix between random and set
-#Create options menu with current zone, health, cheatcodes, ect (Parity)
+#Create settings menu with current zone, health, cheatcodes, ect (Parity)
 # - Add ability to change line position per team member outside battle
 # - Inventory should also be accessible here
 #Support for multiple save files (Very imporant!!)
@@ -233,12 +233,6 @@ def turnToNumber(value): #This is obsolete but im keeping it just to be sure
     finally:
         return value
 
-def openOptionsMenu(): #Opens options menu
-    theContentDestroyer9000(content, deleteAll=True)
-    contentCreator([
-        ["button", [{"data": ["Exit", "exitOptions", ""]}, {"data": ["Current region", "currentRegion"]}, {"data": ["Inventory", "intoInventory"]}]] #Continue working on this
-    ])
-
 def talkTo(character): #Open dialogue menu (can also include shop)
     pass
 
@@ -362,6 +356,24 @@ dialogue = { # concept dialogue list
     ]
 }
 
+#--------------------------------------------------------------------------------Settings
+
+def openSettingsMenu(): #Opens settings menu
+    theContentDestroyer9000(content, deleteAll=True)
+    contentCreator([
+        ["button", [
+            {"data": ["Exit", "exitSettings", ""]}, 
+            {"data": ["Current region", "currentRegion"]}, 
+            {"data": ["Inventory", "intoInventory"]},
+            {"data": ["Change party lines", "changePartyLine"]}
+        ]]
+    ])
+
+def exitSettings():
+    theContentDestroyer9000(content, deleteAll=True)
+    contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
+    roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
+
 #--------------------------------------------------------------------------------Main menu stuff
 
 def mainMenu(): #Shows main menu
@@ -393,6 +405,7 @@ def chooseCharacter(): #Asks what character the player wants to play
 def loadCampaign(): #Starts that campaign
     if playerAnswer.get():
         addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
+        contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
         nextRoom({
                 playerAnswer.get(): ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
             }
@@ -403,7 +416,9 @@ functionList = {
     "nextRoom": nextRoom,
     "newGame": newGame,
     "chooseCharacter": chooseCharacter,
-    "loadCampaign": loadCampaign
+    "loadCampaign": loadCampaign,
+    "openSettingsMenu": openSettingsMenu,
+    "exitSettings": exitSettings
 }
 
 mainMenu()
