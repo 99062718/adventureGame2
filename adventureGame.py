@@ -85,6 +85,9 @@ class person:
         else:
             raise ValueError(f"{statToCheck} is not an existing stat")
 
+    def setItem(self, bodyPart, item):
+        self._characterStats["equippedItems"][bodyPart] == item
+
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
         super().__init__(characterData)
@@ -161,7 +164,7 @@ def roomTypeCheck(currentRoom): #Checks roomType of room
     if currentRoom["roomType"] == "normal":
         contentCreator(currentRoom["content"], currentRoom["choiceEvents"])
     elif currentRoom["roomType"] == "battle":
-        battle(currentRoom["content"])
+        battle(currentRoom["content"], currentRoom["choiceEvents"])
     else:
         raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
 
@@ -230,8 +233,11 @@ def turnToNumber(value): #This is obsolete but im keeping it just to be sure
     finally:
         return value
 
-def optionsMenu(): #Opens options menu
-    pass
+def openOptionsMenu(): #Opens options menu
+    theContentDestroyer9000(content, deleteAll=True)
+    contentCreator([
+        ["button", [{"data": ["Exit", "exitOptions", ""]}, {"data": ["Current region", "currentRegion"]}, {"data": ["Inventory", "intoInventory"]}]] #Continue working on this
+    ])
 
 def talkTo(character): #Open dialogue menu (can also include shop)
     pass
@@ -239,7 +245,7 @@ def talkTo(character): #Open dialogue menu (can also include shop)
 def savePosition(): #Save run data
     pass
 
-def battle(roomContent): #Innitiates battle
+def battle(roomContent, choiceEvents): #Innitiates battle
     pass
 
 def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
