@@ -46,15 +46,18 @@ class person:
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
             "attacks": characterData["attacks"] if "attacks" in characterData else {},
-            "left": characterData["left"] if "left" in characterData else None,
-            "right": characterData["right"] if "right" in characterData else None,
-            "head": characterData["head"] if "head" in characterData else None,
-            "chest": characterData["chest"] if "chest" in characterData else None,
-            "legs": characterData["legs"] if "legs" in characterData else None,
-            "feet": characterData["feet"] if "feet" in characterData else None,
-            "amulet": characterData["amulet"] if "amulet" in characterData else None,
-            "onLine": characterData["onLine"] if "onLine" in characterData else 0
+            "onLine": characterData["onLine"] if "onLine" in characterData else 0,
+            "equippedItems": {
+                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"] else None,
+                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"] else None,
+                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"] else None,
+                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"] else None,
+                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"] else None,
+                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"] else None,
+                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"] else None
+            }
         }
+
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
         if statToChange in self._characterStats:
@@ -85,11 +88,14 @@ class person:
 class characters(person): #Used for characters that have been recruited or are present within the team
     def __init__(self, characterData):
         super().__init__(characterData)
-        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else {}
+        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else []
+        for bodyPart, value in self._characterStats["equippedItems"].items():
+            if value:
+                self._characterStats["inventory"].append(value)
 
     def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
-        inInventory = self.checkStat("inventory").keys()
-        if item in inInventory and notHas or item not in inInventory and notHas == "not":
+        inInventory = self.checkStat("inventory")
+        if item in inInventory and notHas == "has" or item not in inInventory and notHas == "not":
             return True
         return False
 
@@ -105,7 +111,9 @@ playableCharacters = {
             "attacks": {
                 "blazing sun": 25
             },
-            "inventory": {"big sword": 2}
+            "equippedItems":{
+                "left": "truly humongous knife"
+            }
         }
     }
 }
@@ -350,14 +358,14 @@ dialogue = { # concept dialogue list
 
 #--------------------------------------------------------------------------------Main menu stuff
 
-def mainMenu():
+def mainMenu(): #Shows main menu
     contentCreator([
         ["button", [
             {"data": ["New game", "newGame"]}, {"data": ["Load save", "loadSave"]}, {"data": ["Delete save", "deleteSave"]}
         ]]
     ])
 
-def newGame():
+def newGame(): #Asks what campaign the player would like to start
     contentCreator([
         ["choice", [
             {"data": [x, x]} for x in campaigns.keys()
@@ -365,7 +373,7 @@ def newGame():
         ["button", [{"data": ["Choose campaign", "chooseCharacter"]}]]
     ])
 
-def chooseCharacter():
+def chooseCharacter(): #Asks what character the player wants to play
     global currentCampaign
     if playerAnswer.get():
         currentCampaign = playerAnswer.get()
@@ -376,7 +384,7 @@ def chooseCharacter():
             ["button", [{"data": ["Choose character", "loadCampaign"]}]]
         ])
 
-def loadCampaign():
+def loadCampaign(): #Starts that campaign
     if playerAnswer.get():
         addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
         nextRoom({
