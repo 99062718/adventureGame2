@@ -152,10 +152,14 @@ class person: #Creates class from which characters and enemies inherit
 
     @classmethod
     def changeTeam(cls, addOrRemove="add"):
-        if addOrRemove == "add":
-            cls.onTeam.append(playerAnswer.get())
+        if playerAnswer.get():
+            if addOrRemove == "add":
+                cls.onTeam.append(playerAnswer.get())
+            else:
+                cls.onTeam.remove(playerAnswer.get())
+            return True
         else:
-            cls.onTeam.remove(playerAnswer.get())
+            return False
 
 #-------------------------------------------------Characters
 
@@ -183,16 +187,40 @@ def goToBase(): #Goes to player base where team members can be swapped out
     contentCreator([
         ["text", [{"data": ["Welcome to the base!"]}]],
         ["button",[
-            {"data": ["Add to team", "addToTeamMenu"]}
+            {"data": ["Add to team", "addToTeamMenu"]},
+            {"data": ["Remove from team", "removeFromTeamMenu"]}
         ]]
     ])
 
 def addToTeamMenu(): #Player can choose what character they want to add to their team
-    contentCreator([ #Continue work on this later
-        ["text", [{"data": ["Which character would you like to add to your party?"]}]],
-        ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]]
-        ["button", [{"data": ["Choose character", "addToTeam"]}]]
-    ])
+    if len(characters.onTeam) < len(characterDict):
+        contentCreator([
+            ["text", [{"data": ["Which character would you like to add to your party?"]}]],
+            ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]]
+            ["button", [{"data": ["Choose character", "addToTeam"]}, {"data": ["Back", "goToBase"]}]]
+        ])
+    else:
+        messagebox.showerror(message="There are currently no characters available to put in your team!")
+
+def addToTeam(): #Adds character to team and returns to base if succesful
+     ifSuccesful = characters.changeTeam()
+     if ifSuccesful:
+         goToBase()
+
+def removeFromTeamMenu(): #Player can choose what character they want to remove from their team
+    if len(characters.onTeam) != 1:
+        contentCreator([
+            ["text", [{"data": ["Which character would you like to remove from your party?"]}]],
+            ["choice", [{"data": [x, x]} for character in characters.onTeam]]
+            ["button", [{"data": ["Choose character", "removeFromTeam"]}, {"data": ["Back", "goToBase"]}]]
+        ])
+    else:
+        messagebox.showerror(message="Characters cannot be removed while team size is 1!")
+
+def removeFromTeam(): #Removes character from team and returns to base if succesful
+     ifSuccesful = characters.changeTeam("remove")
+     if ifSuccesful:
+         goToBase()
 
 #-------------------------------------------------Enemies
 
@@ -281,8 +309,8 @@ class npc: #Npc which can be recruited, talked to or bought things from
             "happiness": 0,
             "sadness": 0
         } if not characterInfo["emotions"] else characterInfo["emotions"]
-        self.recruitStats = characterInfo["recruitStats"] if characterInfo["recruitStats"] else None
-        self.recruitCriteria = characterInfo["recruitCriteria"] if characterInfo["recruitCriteria"] else None
+        self.recruitStats = characterInfo["recruitStats"] if "recruitStats" in characterInfo["recruitStats"] else None
+        self.recruitCriteria = characterInfo["recruitCriteria"] if "recruitCriteria" in characterInfo["recruitCriteria"] else None
 
     @staticmethod
     def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
@@ -415,7 +443,10 @@ functionList = {
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
     "exitSettings": exitSettings,
-    "addToTeamMenu": addToTeamMenu
+    "addToTeamMenu": addToTeamMenu,
+    "addToTeam": addToTeam,
+    "removeFromTeamMenu": removeFromTeamMenu,
+    "removeFromTeam": removeFromTeam
 }
 
 #--------------------------------------------------------------------------------Not catagorized yet
