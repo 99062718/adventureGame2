@@ -16,7 +16,6 @@ from tkinter.constants import OUTSIDE
 # - Every character has mana. Some attacks take mana and others dont. If mana reaches 0 the mana attacks cannot be used anymore
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
-# - Npcs recruited can be put inside or removed from the team (almost done)
 # - Add possibility for shops
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
@@ -151,12 +150,12 @@ class person: #Creates class from which characters and enemies inherit
         self._characterStats["equippedItems"][bodyPart] = item
 
     @classmethod
-    def changeTeam(cls, addOrRemove="add"):
-        if playerAnswer.get():
+    def changeTeam(cls, obj, addOrRemove="add"):
+        if obj:
             if addOrRemove == "add":
-                cls.onTeam.append(playerAnswer.get())
+                cls.onTeam.append(obj)
             else:
-                cls.onTeam.remove(playerAnswer.get())
+                cls.onTeam.remove(obj)
             return True
         else:
             return False
@@ -203,7 +202,7 @@ def addToTeamMenu(): #Player can choose what character they want to add to their
         messagebox.showerror(message="There are currently no characters available to put in your team!")
 
 def addToTeam(): #Adds character to team and returns to base if succesful
-     ifSuccesful = characters.changeTeam()
+     ifSuccesful = characters.changeTeam(playerAnswer.get())
      if ifSuccesful:
          goToBase()
 
@@ -218,7 +217,7 @@ def removeFromTeamMenu(): #Player can choose what character they want to remove 
         messagebox.showerror(message="Characters cannot be removed while team size is 1!")
 
 def removeFromTeam(): #Removes character from team and returns to base if succesful
-     ifSuccesful = characters.changeTeam("remove")
+     ifSuccesful = characters.changeTeam(playerAnswer.get(), "remove")
      if ifSuccesful:
          goToBase()
 
