@@ -65,10 +65,12 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
                             "hasItem": ["big knife", ["truly humongous knife"]],
                             "OnTeam": [["dave"]],
                             "defeatedBoss": ["john", ["big man the almighty"]]
-                        }}]]],
+                        }},{"data": ["go to base", "base"]}]],
+                        ["button", [{"data": ["Choose", "nextRoom"]}]]],
                 "choiceEvents": {
                     "dave": ["talkTo", "dave"],
-                    "exit": ["goTo", "forest", 5]
+                    "exit": ["goTo", "forest", 5],
+                    "base": ["base"]
                 }
             },
             {
@@ -94,6 +96,7 @@ characterDict = {}
 playerAccomplishments = { #Add all player accomplishments (like beating a boss) to this
     "defeatedBosses": []
 }
+currentRegionExtra = {} #This is for keeping track of the player being in battle, base, or talking to an npc
 content = [[], []]
 
 #--------------------------------------------------------------------------------Characters and enemies
@@ -183,11 +186,15 @@ def addToCharacterDict(toAdd): #Adds newly recruited people to character class a
 #-------------------------------------------------Character base
 
 def goToBase(): #Goes to player base where team members can be swapped out
+    global currentRegionExtra
+    currentRegionExtra["base"] = "ayo"
+
     contentCreator([
         ["text", [{"data": ["Welcome to the base!"]}]],
         ["button",[
             {"data": ["Add to team", "addToTeamMenu"]},
-            {"data": ["Remove from team", "removeFromTeamMenu"]}
+            {"data": ["Remove from team", "removeFromTeamMenu"]},
+            {"data": ["Exit base", "backToCampaign"]}
         ]]
     ])
 
@@ -195,7 +202,7 @@ def addToTeamMenu(): #Player can choose what character they want to add to their
     if len(characters.onTeam) < len(characterDict):
         contentCreator([
             ["text", [{"data": ["Which character would you like to add to your party?"]}]],
-            ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]]
+            ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]],
             ["button", [{"data": ["Choose character", "addToTeam"]}, {"data": ["Back", "goToBase"]}]]
         ])
     else:
@@ -210,7 +217,7 @@ def removeFromTeamMenu(): #Player can choose what character they want to remove 
     if len(characters.onTeam) != 1:
         contentCreator([
             ["text", [{"data": ["Which character would you like to remove from your party?"]}]],
-            ["choice", [{"data": [x, x]} for character in characters.onTeam]]
+            ["choice", [{"data": [x, x]} for character in characters.onTeam]],
             ["button", [{"data": ["Choose character", "removeFromTeam"]}, {"data": ["Back", "goToBase"]}]]
         ])
     else:
@@ -274,7 +281,7 @@ def contentCreator(roomContent, extraData=None): #With the arival of lord conten
                     continue
 
             if currentContent[0] == "text": #Creates label
-                currentWidget = tkinter.Label(text=currentText["data"])
+                currentWidget = tkinter.Label(text=currentText["data"][0])
             elif currentContent[0] == "choice": #Creates radio button       
                 currentWidget = ttk.Radiobutton(
                     text=currentText["data"][0],
@@ -295,6 +302,13 @@ def contentCreator(roomContent, extraData=None): #With the arival of lord conten
             else:
                 currentWidget.place(bordermode=OUTSIDE, anchor="nw")
             content[0 if len(currentText["data"]) < 3 else 1].append(currentWidget)
+
+def backToCampaign(): #Goes back to where campaign left off
+    global currentRegionExtra
+    currentRegionExtra = {}
+    theContentDestroyer9000(content, deleteAll=True)
+    contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
+    roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
@@ -380,17 +394,12 @@ def openSettingsMenu(): #Opens settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([
         ["button", [
-            {"data": ["Exit", "exitSettings", ""]}, 
+            {"data": ["Exit", "loadCampaign", ""]}, 
             {"data": ["Current region", "currentRegion"]}, 
             {"data": ["Inventory", "intoInventory"]},
             {"data": ["Change party lines", "changePartyLine"]}
         ]]
     ])
-
-def exitSettings(): #Exists settings menu
-    theContentDestroyer9000(content, deleteAll=True)
-    contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
-    roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
 
 #--------------------------------------------------------------------------------Main menu stuff
 
@@ -418,16 +427,25 @@ def chooseCharacter(): #Asks what character the player wants to play
                 {"data": [x, x]} for x in playableCharacters[currentCampaign].keys()
             ]],
             ["button", [{"data": ["Choose character", "loadCampaign"]}]]
-        ])
+        ], True)
+    else:
+        raise ValueError("Please select a campaign")
 
-def loadCampaign(): #Starts that campaign
-    if playerAnswer.get():
-        addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
-        contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
-        nextRoom({
-                playerAnswer.get(): ["goTo", list(campaigns[currentCampaign].keys())[0], 0]
-            }
-        )
+def loadCampaign(startNew=False): #Starts that campaign
+    if startNew:
+        if playerAnswer.get():
+            addToCharacterDict(playableCharacters[currentCampaign][playerAnswer.get()])
+            contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
+            nextRoom({playerAnswer.get(): ["goTo", list(campaigns[currentCampaign].keys())[0], 0]})
+        else:
+            raise ValueError("Please select character")
+    else:
+        if "talkTo" in currentRegionExtra.keys():
+            talkTo(currentRegionExtra["talkTo"])
+        elif "base" in currentRegionExtra.keys():
+            goToBase()
+        else:
+            backToCampaign()
 
 #--------------------------------------------------------------------------------Automatic function execution
 
@@ -441,11 +459,11 @@ functionList = {
     "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
-    "exitSettings": exitSettings,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
-    "removeFromTeam": removeFromTeam
+    "removeFromTeam": removeFromTeam,
+    "backToCampaign": backToCampaign
 }
 
 #--------------------------------------------------------------------------------Not catagorized yet
