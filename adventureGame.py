@@ -1,4 +1,5 @@
 import tkinter
+import random
 from tkinter import StringVar, ttk, messagebox
 from tkinter.constants import OUTSIDE
 
@@ -33,6 +34,7 @@ from tkinter.constants import OUTSIDE
 # - Add ability to change line position per team member outside battle
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
+# - Battles are going to be a bit of a hard one. Save all enemies to currentRegionExtra and save that to json
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -240,7 +242,7 @@ def roomTypeCheck(currentRoom): #Checks roomType of room
     if currentRoom["roomType"] == "normal":
         contentCreator(currentRoom["content"], currentRoom["choiceEvents"])
     elif currentRoom["roomType"] == "battle":
-        battle(currentRoom["content"], currentRoom["choiceEvents"])
+        battleInnitializer(currentRoom["content"], currentRoom["choiceEvents"])
     else:
         raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
 
@@ -309,6 +311,30 @@ def backToCampaign(): #Goes back to where campaign left off
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
     roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
+
+#--------------------------------------------------------------------------------Battle
+
+{ #Just here for me to remember what i need to implement into battle
+                "roomType": "battle",
+                "content": {
+                    "boss": ["henk"],
+                    "enemies": {"evil dave": {"timesAppear": 2}},
+                    "text": ["bla bla evil plot bla bla"]
+                }
+            }
+
+def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
+    usedEnemiesDict = {} #Should check if this exists within currentRegionExtras
+    for enemyName, enemyData in content["enemies"].items():
+        timesAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+        if timesAppear == 1:
+            usedEnemiesDict[enemyName] = enemies(enemyDict[enemyName])
+            enemies.changeTeam(enemyName)
+        else:
+            for timesAppeared in range(timesAppear):
+                newName = f"{enemyName}{timesAppeared + 1}"
+                usedEnemiesDict[newName] = enemies(enemyDict[enemyName])
+                enemies.changeTeam(newName)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
@@ -471,7 +497,7 @@ functionList = {
 def turnToNumber(value): #This is obsolete but im keeping it just to be sure
     try:
         value = float(value)
-    except:
+    except TypeError:
         return value
     finally:
         return value
@@ -480,9 +506,6 @@ def talkTo(character): #Open dialogue menu (can also include shop)
     pass
 
 def savePosition(): #Save run data
-    pass
-
-def battle(roomContent, choiceEvents): #Innitiates battle
     pass
 
 def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has achieved certain conditions (with the exception of npc emotions)
