@@ -15,6 +15,7 @@ from tkinter.constants import OUTSIDE
 # - Npcs and player attacks can be removed and added
 # - Attacks can be learned by either leveling up or buying them from a shop
 # - Every character has mana. Some attacks take mana and others dont. If mana reaches 0 the mana attacks cannot be used anymore
+# - Add check to see if battle already exists within currentRegionExtra
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -65,12 +66,38 @@ playableCharacters = {
         "hero": {
             "name": "hero the 4th",
             "health": 10,
+            "mana": 0,
             "attacks": {
                 "blazing sun": 25
             },
             "equippedItems":{
                 "left": "truly humongous knife"
             }
+        }
+    }
+}
+
+customEnemies = {
+    "evil dave": {
+        "name": "evil dave",
+        "health": 10,
+        "mana": 0,
+        "attacks": {
+            "blazing sun": 25
+        },
+        "equippedItems":{
+            "left": "truly humongous knife"
+        }
+    },
+    "even more evil dave": {
+        "name": "even more evil dave",
+        "health": 25,
+        "mana": 200,
+        "attacks": {
+            "blazing sun": 25
+        },
+        "equippedItems":{
+            "left": "truly humongous knife"
         }
     }
 }
@@ -86,11 +113,11 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
                             "hasItem": ["big knife", ["truly humongous knife"]],
                             "OnTeam": [["dave"]],
                             "defeatedBoss": ["john", ["big man the almighty"]]
-                        }},{"data": ["go to base", "base"]}]],
+                        }},{"data": ["go to base", "base"]},{"data": ["exit", "exit"]}]],
                         ["button", [{"data": ["Choose", "nextRoom"]}]]],
                 "choiceEvents": {
                     "dave": ["talkTo", "dave"],
-                    "exit": ["goTo", "forest", 5],
+                    "exit": ["goTo", "forest", 1],
                     "base": ["base"]
                 }
             },
@@ -98,6 +125,9 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
                 "roomType": "battle",
                 "content": {
                     "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
+                },
+                "choiceEvents": {
+                    "ifWin": ["goTo", "forest", 0]
                 }
             },
             {
@@ -148,8 +178,8 @@ class person: #Creates class from which characters and enemies inherit
             }
         }
 
-        for bodyPart, item in self._characterStats["equippedItems"].items():
-            self.addItemModifyerToStat(item)
+        #for bodyPart, item in self._characterStats["equippedItems"].items():
+            #self.addItemModifyerToStat(item)
 
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -357,25 +387,28 @@ def backToCampaign(): #Goes back to where campaign left off
 # }
 
 def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
-    usedEnemiesDict = {} #Should check if this exists within currentRegionExtras
-    for enemyName, enemyData in content["enemies"].items():
+    usedEnemiesDict = {}
+    for enemyName, enemyData in roomContent["enemies"].items():
         timesAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
         if timesAppear == 1:
-            usedEnemiesDict[enemyName] = enemies(enemyDict[enemyName])
+            usedEnemiesDict[enemyName] = enemies(customEnemies[enemyName])
             enemies.changeTeam(enemyName)
         else:
             for timesAppeared in range(timesAppear):
                 newName = f"{enemyName}{timesAppeared + 1}"
-                usedEnemiesDict[newName] = enemies(enemyDict[enemyName])
+                usedEnemiesDict[newName] = enemies(customEnemies[enemyName])
                 enemies.changeTeam(newName)
 
-def turnCalculator():
+    turnCalculator(usedEnemiesDict)
+
+def turnCalculator(enemyDict):
     turnList = {}
     for character, enemy in zip(characters.onTeam, enemies.onTeam):
         turnList[character] = [characterDict[character].checkStat(self, "speed"), "character"]
-        turnList[enemy] = []
+        turnList[enemy] = [enemyDict[enemy].checkStat(self, "speed"), "enemy"]
 
     turnList.sort(key=lambda data: data[0], reverse=True)
+    print(turnList)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
