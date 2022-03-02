@@ -22,24 +22,43 @@ from tkinter.constants import OUTSIDE
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create inventory system (Normal importance)
 # - Items can be equipped from here
-# - Inventories should be able to be accessed from each team member
-# - Items should be able to be transferred from inventory to inventory
+# - Implement shared inventory instead of personal inventories
 #Create item support for characters (Normal importance)
-# - Items can give special bonusses like +atk, +def or +agility but can also give special bonusses like extra attack done to wolf enemies
-# - Items maybe can have a kind of debuff attached to them like -2 def or extra damage taken from wolf enemies
+# - Items can give special bonusses like +atk, +def or +agility
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
-# - Bosses might be able to drop special items that can only be obtained from them
-# - Gold obtained from killing enemies should be a mix between random and set
+# - Gold and xp obtained from killing enemies should be a mix between random and set
 #Create settings menu with current zone, health, cheatcodes, ect (Parity)
 # - Add ability to change line position per team member outside battle
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
 # - Battles are going to be a bit of a hard one. Save all enemies to currentRegionExtra and save that to json
 
+#Ideas to flesh the game out a bit more:
+#Items
+# - Life steal
+# - Durability (dont have to be used for every item)
+# - Consumables
+# - Extra loot dropped (higher chance at enemy dropping their items or more gold)
+# - Thing that happen depending on the percentage of health the player has (more attack, higher crit chance, more defense, ect)
+# - Events that trigger when crit happens (Gain health when crit, gain money on crit, ect)
+# - Items that are better against certain types of monsters
+#Battle
+# - A template system so that frequently used enemy combos dont have to constantly be written out in its entirety
+#Bosses
+# - Bosses might be able to drop special items that can only be obtained from them
+
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
 #--------------------------------------------------------------------------------Dictionaries
+
+customItems = {
+    "Henk's dagger": {
+        "speed": 2,
+        "attackMulti": 0.25,
+        "bodyParts": ["left", "right"]
+    }
+}
 
 playableCharacters = {
     "campaign": {
@@ -77,7 +96,7 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
             },
             {
                 "roomType": "battle",
-                "content": { #Perhaps some kind of template system would be nice alongside this so frequenly used enemy combos can be easily reused
+                "content": {
                     "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
                 }
             },
@@ -111,18 +130,26 @@ class person: #Creates class from which characters and enemies inherit
             "name": characterData["name"],
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
-            "attacks": characterData["attacks"] if "attacks" in characterData else {},
-            "onLine": characterData["onLine"] if "onLine" in characterData else 0,
+            "attacks": characterData["attacks"] if "attacks" in characterData.keys() else {},
+            "attackMulti": characterData["attackMulti"] if "attackMulti" in characterData.keys() else 1,
+            "speed": characterData["speed"] if "speed" in characterData.keys() else 1,
+            "defense": characterData["defense"] if "defense" in characterData.keys() else 1,
+            "mana": characterData["mana"],
+            "maxMana": characterData["maxMana"] if "maxMana" in characterData.keys() else characterData["mana"],
+            "onLine": characterData["onLine"] if "onLine" in characterData.keys() else 0,
             "equippedItems": {
-                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"] else None,
-                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"] else None,
-                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"] else None,
-                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"] else None,
-                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"] else None,
-                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"] else None,
-                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"] else None
+                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"].keys() else None,
+                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"].keys() else None,
+                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"].keys() else None,
+                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"].keys() else None,
+                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"].keys() else None,
+                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"].keys() else None,
+                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"].keys() else None
             }
         }
+
+        for bodyPart, item in self._characterStats["equippedItems"].items():
+            self.addItemModifyerToStat(item)
 
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -153,9 +180,10 @@ class person: #Creates class from which characters and enemies inherit
 
     def setItem(self, bodyPart, item): #Sets item of given bodypart
         self._characterStats["equippedItems"][bodyPart] = item
+        self.addItemModifyerToStat(item)
 
     @classmethod
-    def changeTeam(cls, obj, addOrRemove="add"):
+    def changeTeam(cls, obj, addOrRemove="add"): #Adds/removes person to/from class onTeam
         if obj:
             if addOrRemove == "add":
                 cls.onTeam.append(obj)
@@ -323,6 +351,11 @@ def backToCampaign(): #Goes back to where campaign left off
                 }
             }
 
+# { list to visualize how i want to store save data during battle
+#   "currentEnemies": [insert list here],
+#   "turns": [insert list of when characters can attack and whos turn it is]
+# }
+
 def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
     usedEnemiesDict = {} #Should check if this exists within currentRegionExtras
     for enemyName, enemyData in content["enemies"].items():
@@ -335,6 +368,14 @@ def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
                 newName = f"{enemyName}{timesAppeared + 1}"
                 usedEnemiesDict[newName] = enemies(enemyDict[enemyName])
                 enemies.changeTeam(newName)
+
+def turnCalculator():
+    turnList = {}
+    for character, enemy in zip(characters.onTeam, enemies.onTeam):
+        turnList[character] = [characterDict[character].checkStat(self, "speed"), "character"]
+        turnList[enemy] = []
+
+    turnList.sort(key=lambda data: data[0], reverse=True)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
