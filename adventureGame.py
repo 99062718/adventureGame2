@@ -93,6 +93,7 @@ customEnemies = {
         "name": "even more evil dave",
         "health": 25,
         "mana": 200,
+        "speed": 5,
         "attacks": {
             "blazing sun": 25
         },
@@ -153,7 +154,6 @@ content = [[], []]
 #--------------------------------------------------------------------------------Characters and enemies
 
 class person: #Creates class from which characters and enemies inherit
-    onTeam = [] #Add all current team members to this list
 
     def __init__(self, characterData):
         self._characterStats = {
@@ -226,6 +226,8 @@ class person: #Creates class from which characters and enemies inherit
 #-------------------------------------------------Characters
 
 class characters(person): #Used for characters that have been recruited or are present within the team
+    onTeam = []
+
     def __init__(self, characterData):
         super().__init__(characterData)
         self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else []
@@ -242,6 +244,7 @@ class characters(person): #Used for characters that have been recruited or are p
 def addToCharacterDict(toAdd): #Adds newly recruited people to character class and characterDict
     global characterDict
     characterDict[toAdd["name"]] = characters(toAdd)
+    characters.changeTeam(toAdd["name"])
 
 #-------------------------------------------------Character base
 
@@ -291,6 +294,8 @@ def removeFromTeam(): #Removes character from team and returns to base if succes
 #-------------------------------------------------Enemies
 
 class enemies(person): #Used for enemies currently in battle with
+    onTeam = []
+
     def __init__(self, characterData):
         super().__init__(characterData)
 
@@ -403,12 +408,15 @@ def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
 
 def turnCalculator(enemyDict):
     turnList = {}
-    for character, enemy in zip(characters.onTeam, enemies.onTeam):
-        turnList[character] = [characterDict[character].checkStat(self, "speed"), "character"]
-        turnList[enemy] = [enemyDict[enemy].checkStat(self, "speed"), "enemy"]
+    for character in characters.onTeam:
+        turnList[character] = [characterDict[character].checkStat("speed"), "character"]
+        
+    for enemy in enemies.onTeam:
+        turnList[enemy] = [enemyDict[enemy].checkStat("speed"), "enemy"]
 
-    turnList.sort(key=lambda data: data[0], reverse=True)
-    print(turnList)
+    temp = list(turnList.items())
+    temp.sort(key=lambda a: a[1], reverse=True)    
+    turnList = dict(temp)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
