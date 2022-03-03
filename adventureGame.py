@@ -8,6 +8,7 @@ from tkinter.constants import OUTSIDE
 # - Add battle roomType that can auto detect if its a normal or boss battle
 # - In battle roomType all that has to be entered in content are the enemies and the min/max amount there is supposed to be of them
 # - Add both ifWin and ifLose into battle
+# - Add extra settings that count for the entire campaign (such as party size limits)
 #Create battle system (the line layer system) (Important)
 # - Npc attacks are controlled by the player
 # - If an entity stands on a higher line. Those on lines behind it cannot be attacked but can still attacked
@@ -415,7 +416,7 @@ def turnCalculator(enemyDict):
         turnList[enemy] = [enemyDict[enemy].checkStat("speed"), "enemy"]
 
     temp = list(turnList.items())
-    temp.sort(key=lambda a: a[1], reverse=True)    
+    temp.sort(key=lambda a: a[1][0], reverse=True)    
     turnList = dict(temp)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
