@@ -397,17 +397,24 @@ def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
     for enemyName, enemyData in roomContent["enemies"].items():
         timesAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
         if timesAppear == 1:
-            usedEnemiesDict[enemyName] = enemies(customEnemies[enemyName])
+            usedEnemiesDict[enemyName] = createEnemy(enemyName, enemyData)
             enemies.changeTeam(enemyName)
         else:
             for timesAppeared in range(timesAppear):
                 newName = f"{enemyName}{timesAppeared + 1}"
-                usedEnemiesDict[newName] = enemies(customEnemies[enemyName])
+                usedEnemiesDict[newName] = createEnemy(enemyName, enemyData)
                 enemies.changeTeam(newName)
 
     turnCalculator(usedEnemiesDict)
 
-def turnCalculator(enemyDict):
+def createEnemy(enemyName, enemyData): #Creates enemy
+    onLine = 0 if "onLine" not in enemyData else enemyData["onLine"] if not isinstance(enemyData["onLine"], list) else random.randint(enemyData["onLine"][0], enemyData["onLine"][1])
+    enemyToAdd = customEnemies[enemyName]
+    enemyToAdd["onLine"] = onLine
+
+    return enemies(customEnemies[enemyName])
+
+def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     turnList = {}
     for character in characters.onTeam:
         turnList[character] = [characterDict[character].checkStat("speed"), "character"]
