@@ -60,13 +60,13 @@ customItems = {
     "Henk's dagger": {
         "speed": 2,
         "attackMulti": 0.25,
-        "lifeDrain": ["wither"],
+        "dmgOverTime": ["wither"],
         "bodyParts": ["left", "right"]
     },
     "truly humongous knife": {
         "speed": 5,
         "lifeSteal": 20,
-        "lifeDrain": ["fire", "poison"],
+        "dmgOverTime": ["fire", "poison"],
         "bodyParts": ["left", "right"]
     }
 }
@@ -187,7 +187,7 @@ class person: #Creates class from which characters and enemies inherit
                 "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"].keys() else None
             },
             "lifeSteal": characterData["lifeSteal"] if "lifeSteal" in characterData.keys() else 0,
-            "lifeDrain": characterData["lifeDrain"] if "lifeDrain" in characterData.keys() else []
+            "dmgOverTime": characterData["dmgOverTime"] if "dmgOverTime" in characterData.keys() else []
         }
 
         for bodyPart, item in self._characterStats["equippedItems"].items():
@@ -241,9 +241,9 @@ class person: #Creates class from which characters and enemies inherit
             match modifier: #Gives an error in my IDE. Works perfectly though...
                 case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "lifeSteal" | "defense"):
                     self.changeStat("subtract" if remove else "add", modifier, value)
-                case "lifeDrain":
-                    for lifeDrainModifier in value:
-                        self.changeStat("remove" if remove else "append", "lifeDrain", lifeDrainModifier)
+                case "dmgOverTime":
+                    for overTimeModifier in value:
+                        self.changeStat("remove" if remove else "append", "dmgOverTime", overTimeModifier)
 
     @classmethod
     def changeTeam(cls, obj, addOrRemove="add"): #Adds/removes person to/from class onTeam
