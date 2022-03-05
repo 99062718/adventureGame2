@@ -71,15 +71,19 @@ customItems = {
     }
 }
 
+customAttacks = {
+    "blazing sun": {
+        "damage": 25
+    }
+}
+
 playableCharacters = {
     "campaign": {
         "hero": {
             "name": "hero the 4th",
             "health": 10,
             "mana": 0,
-            "attacks": {
-                "blazing sun": 25
-            },
+            "attacks": ["blazing sun"],
             "equippedItems":{
                 "left": "truly humongous knife"
             }
@@ -92,9 +96,7 @@ customEnemies = {
         "name": "evil dave",
         "health": 10,
         "mana": 0,
-        "attacks": {
-            "blazing sun": 25
-        },
+        "attacks": ["blazing sun"],
         "equippedItems":{
             "left": "truly humongous knife"
         }
@@ -104,9 +106,7 @@ customEnemies = {
         "health": 25,
         "mana": 200,
         "speed": 5,
-        "attacks": {
-            "blazing sun": 25
-        },
+        "attacks": ["blazing sun"],
         "equippedItems":{
             "left": "truly humongous knife"
         }
@@ -170,7 +170,7 @@ class person: #Creates class from which characters and enemies inherit
             "name": characterData["name"],
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
-            "attacks": characterData["attacks"] if "attacks" in characterData.keys() else {},
+            "attacks": characterData["attacks"] if "attacks" in characterData.keys() else [],
             "attackMulti": characterData["attackMulti"] if "attackMulti" in characterData.keys() else 1,
             "speed": characterData["speed"] if "speed" in characterData.keys() else 1,
             "defense": characterData["defense"] if "defense" in characterData.keys() else 1,
