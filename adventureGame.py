@@ -48,6 +48,8 @@ from tkinter.constants import OUTSIDE
 # - A template system so that frequently used enemy combos dont have to constantly be written out in its entirety
 #Bosses
 # - Bosses might be able to drop special items that can only be obtained from them
+#Rooms
+# - Dungeons (this is to fix balancing for battles and xp is extremely difficult as is)
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -58,6 +60,13 @@ customItems = {
     "Henk's dagger": {
         "speed": 2,
         "attackMulti": 0.25,
+        "lifeDrain": ["wither"],
+        "bodyParts": ["left", "right"]
+    },
+    "truly humongous knife": {
+        "speed": 5,
+        "lifeSteal": 20,
+        "lifeDrain": ["fire", "poison"],
         "bodyParts": ["left", "right"]
     }
 }
@@ -176,11 +185,16 @@ class person: #Creates class from which characters and enemies inherit
                 "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"].keys() else None,
                 "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"].keys() else None,
                 "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"].keys() else None
-            }
+            },
+            "lifeSteal": characterData["lifeSteal"] if "lifeSteal" in characterData.keys() else 0,
+            "lifeDrain": characterData["lifeDrain"] if "lifeDrain" in characterData.keys() else []
         }
 
-        #for bodyPart, item in self._characterStats["equippedItems"].items():
-            #self.addItemModifyerToStat(item)
+        for bodyPart, item in self._characterStats["equippedItems"].items():
+            if item:
+                self.changeItemModifyer(item)
+
+        self.setItem("left", "Henk's dagger")
 
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -210,8 +224,26 @@ class person: #Creates class from which characters and enemies inherit
             raise ValueError(f"{statToCheck} is not an existing stat")
 
     def setItem(self, bodyPart, item): #Sets item of given bodypart
+        pastItem = self.checkItem(bodyPart)
+        if pastItem:
+            print(pastItem)
+            self.changeItemModifyer(pastItem, True)
         self._characterStats["equippedItems"][bodyPart] = item
-        self.addItemModifyerToStat(item)
+        self.changeItemModifyer(item)
+
+    def checkItem(self, bodyPart):
+        return self._characterStats["equippedItems"][bodyPart]
+
+    def changeItemModifyer(self, item, remove=False): #Adds or removes item modifyer from person stats
+        toChange = None
+
+        for modifier, value in customItems[item].items():
+            match modifier: #Gives an error in my IDE. Works perfectly though...
+                case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "lifeSteal" | "defense"):
+                    self.changeStat("subtract" if remove else "add", modifier, value)
+                case "lifeDrain":
+                    for lifeDrainModifier in value:
+                        self.changeStat("remove" if remove else "append", "lifeDrain", lifeDrainModifier)
 
     @classmethod
     def changeTeam(cls, obj, addOrRemove="add"): #Adds/removes person to/from class onTeam
