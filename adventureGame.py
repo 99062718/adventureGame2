@@ -546,14 +546,22 @@ def openSettingsMenu(): #Opens settings menu
 def intoInventory(): #Opens inventory menu
     contentCreator([
         ["text", [{"data": [text]} for text in ("Welcome to the inventory!", "What is it you want to do?")]],
-        ["choice", [{"data": data} for data in (["Remove item from character", "remove"], ["Add item to character", "add"], ["Check item stat", "stat"])]]
+        ["choice", [{"data": data} for data in (["Remove item from character", "remove"], ["Add item to character", "add"], ["Check item stat", "stat"])]],
+        ["button", [{"data": ["Choose functionality", "itemList"]}]]
     ])
 
-def inventoryFunctionality(): #Removes/adds items to characters or checks an items stat
+def itemList(): #Shows list of items that can be chosen
+    text = playerAnswer.get() if playerAnswer.get() in ("add", "remove") else "check stat of"
+    chosenFunctionality = playerAnswer.get()
+
     contentCreator([
-        ["text", [{"data": ["Welcome to the inventory!"]}, {"data": ["Choose an item to do something with:"]}]],
-        ["choice", [{"data": [item, item]} for item in characters.inventory]]
-    ])
+        ["text", [{"data": ["Welcome to the inventory!"]}, {"data": [f"Choose an item to {text}:"]}]],
+        ["choice", [{"data": [item, item]} for item in characters.inventory]],
+        ["button", [{"data": ["Choose item", "executeItemFunc"]}]]
+    ], chosenFunctionality)
+
+def executeItemFunc(chosenFunctionality):
+    pass
 
 #--------------------------------------------------------------------------------Main menu stuff
 
@@ -606,6 +614,8 @@ functionList = {
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
     "intoInventory": intoInventory,
+    "itemList": itemList,
+    "executeItemFunc": executeItemFunc,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
