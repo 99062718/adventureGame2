@@ -543,22 +543,41 @@ def openSettingsMenu(): #Opens settings menu
         ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "currentRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLine"])]]
     ])
 
+#-------------------------------------------------Inventory
+
 def intoInventory(): #Opens inventory menu
     contentCreator([
         ["text", [{"data": [text]} for text in ("Welcome to the inventory!", "What is it you want to do?")]],
         ["choice", [{"data": data} for data in (["Remove item from character", "remove"], ["Add item to character", "add"], ["Check item stat", "stat"])]],
-        ["button", [{"data": ["Choose functionality", "itemList"]}]]
+        ["button", [{"data": ["Choose functionality", "showItemList"]}]]
     ])
 
-def itemList(): #Shows list of items that can be chosen
-    text = playerAnswer.get() if playerAnswer.get() in ("add", "remove") else "check stat of"
-    chosenFunctionality = playerAnswer.get()
+def showInventoryItemList(): #Shows list of items that can be chosen
+    if playerAnswer.get() == "remove":
+        showTeamList(playerAnswer.get())
 
-    contentCreator([
-        ["text", [{"data": ["Welcome to the inventory!"]}, {"data": [f"Choose an item to {text}:"]}]],
-        ["choice", [{"data": [item, item]} for item in characters.inventory]],
-        ["button", [{"data": ["Choose item", "executeItemFunc"]}]]
-    ], chosenFunctionality)
+    if playerAnswer.get():
+        text = playerAnswer.get() if playerAnswer.get() in "add" else "check stat of"
+
+        contentCreator([
+            ["text", [{"data": [f"Choose an item to {text}:"]}]],
+            ["choice", [{"data": [item, item]} for item in characters.inventory]],
+            ["button", [{"data": ["Choose item", "executeItemFunc" if playerAnswer.get() == "check" else "showTeamList"]}]]
+        ], playerAnswer.get())
+
+def showTeamList(chosenFunctionality): #Shows list of characters that can be chosen
+    text = "give item" if chosenFunctionality == "add" else "take item from"
+
+    if playerAnswer.get():
+        contentCreator([
+            ["text", [{"data": ["Choose a character"]}]],
+            ["choice", [{"data": [character, character]} for character in characterDict.keys()]]
+            ["button", [{"data": ["Choose character", "showCharacterItemList" if chosenFunctionality == "remove" else "chooseBodypart"]}]]
+        ])
+
+def showCharacterItemList():
+    if playerAnswer.get():
+        pass
 
 def executeItemFunc(chosenFunctionality):
     pass
@@ -614,7 +633,7 @@ functionList = {
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
     "intoInventory": intoInventory,
-    "itemList": itemList,
+    "itemList": showInventoryItemList,
     "executeItemFunc": executeItemFunc,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
