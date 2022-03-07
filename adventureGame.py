@@ -256,6 +256,9 @@ class person: #Creates class from which characters and enemies inherit
         else:
             return False
 
+    def deleteSelf(self):
+        del self
+
 #-------------------------------------------------Characters
 
 class characters(person): #Used for characters that have been recruited or are present within the team
@@ -298,7 +301,7 @@ def addToTeamMenu(): #Player can choose what character they want to add to their
     if len(characters.onTeam) < len(characterDict):
         contentCreator([
             ["text", [{"data": ["Which character would you like to add to your party?"]}]],
-            ["choice", [{"data": [x, x], "blockIf": {"onTeam": [x]}} for character in characterDict]],
+            ["choice", [{"data": [character, character], "blockIf": {"onTeam": [character]}} for character in characterDict]],
             ["button", [{"data": ["Choose character", "addToTeam"]}, {"data": ["Back", "goToBase"]}]]
         ])
     else:
@@ -313,7 +316,7 @@ def removeFromTeamMenu(): #Player can choose what character they want to remove 
     if len(characters.onTeam) != 1:
         contentCreator([
             ["text", [{"data": ["Which character would you like to remove from your party?"]}]],
-            ["choice", [{"data": [x, x]} for character in characters.onTeam]],
+            ["choice", [{"data": [character, character]} for character in characters.onTeam]],
             ["button", [{"data": ["Choose character", "removeFromTeam"]}, {"data": ["Back", "goToBase"]}]]
         ])
     else:
