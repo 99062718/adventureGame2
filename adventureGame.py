@@ -24,7 +24,6 @@ from tkinter.constants import OUTSIDE
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create inventory system (Normal importance)
 # - Items can be equipped from here
-# - Implement shared inventory instead of personal inventories
 #Create item support for characters (Normal importance)
 # - Items can give special bonusses like +atk, +def or +agility
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
@@ -194,8 +193,6 @@ class person: #Creates class from which characters and enemies inherit
             if item:
                 self.changeItemModifyer(item)
 
-        self.setItem("left", "Henk's dagger")
-
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
         if statToChange in self._characterStats:
@@ -226,10 +223,13 @@ class person: #Creates class from which characters and enemies inherit
     def setItem(self, bodyPart, item): #Sets item of given bodypart
         pastItem = self.checkItem(bodyPart)
         if pastItem:
-            print(pastItem)
             self.changeItemModifyer(pastItem, True)
+            characters.teamEquiped.remove(pastItem)
+            characters.inventory.append(pastItem)
         self._characterStats["equippedItems"][bodyPart] = item
         self.changeItemModifyer(item)
+        if self.checkStat("name") in characterDict.keys():
+            characters.teamEquiped.append(item)
 
     def checkItem(self, bodyPart):
         return self._characterStats["equippedItems"][bodyPart]
@@ -263,17 +263,17 @@ class person: #Creates class from which characters and enemies inherit
 
 class characters(person): #Used for characters that have been recruited or are present within the team
     onTeam = []
+    inventory = []
+    teamEquiped = []
 
     def __init__(self, characterData):
         super().__init__(characterData)
-        self._characterStats["inventory"] = characterData["inventory"] if "inventory" in characterData else []
         for bodyPart, value in self._characterStats["equippedItems"].items(): #Adds all currently equipped items to inventory
             if value:
-                self._characterStats["inventory"].append(value)
+                characters.teamEquiped.append(value)
 
     def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
-        inInventory = self.checkStat("inventory")
-        if item in inInventory and notHas == "has" or item not in inInventory and notHas == "not":
+        if item in characters.inventory and notHas == "has" or item not in characters.inventory and notHas == "not" or item in characters.teamEquiped and notHas == "has" or item not in characters.teamEquiped and notHas == "not":
             return True
         return False
 
@@ -550,6 +550,11 @@ def openSettingsMenu(): #Opens settings menu
             {"data": ["Inventory", "intoInventory"]},
             {"data": ["Change party lines", "changePartyLine"]}
         ]]
+    ])
+
+def intoInventory():
+    contentCreator([
+        ["choice", [{"data"}]]
     ])
 
 #--------------------------------------------------------------------------------Main menu stuff
