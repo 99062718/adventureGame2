@@ -558,17 +558,11 @@ def inventoryFunctionality(): #Removes/adds items to characters or checks an ite
 #--------------------------------------------------------------------------------Main menu stuff
 
 def mainMenu(): #Shows main menu
-    contentCreator([
-        ["button", [
-            {"data": ["New game", "newGame"]}, {"data": ["Load save", "loadSave"]}, {"data": ["Delete save", "deleteSave"]}
-        ]]
-    ])
+    contentCreator([["button", [{"data": data} for data in (["New game", "newGame"], ["Load save", "loadSave"], ["Delete save", "deleteSave"])]]])
 
 def newGame(): #Asks what campaign the player would like to start
     contentCreator([
-        ["choice", [
-            {"data": [x, x]} for x in campaigns.keys()
-        ]],
+        ["choice", [{"data": [x, x]} for x in campaigns.keys()]],
         ["button", [{"data": ["Choose campaign", "chooseCharacter"]}]]
     ])
 
@@ -577,9 +571,7 @@ def chooseCharacter(): #Asks what character the player wants to play
     if playerAnswer.get():
         currentCampaign = playerAnswer.get()
         contentCreator([
-            ["choice", [
-                {"data": [x, x]} for x in playableCharacters[currentCampaign].keys()
-            ]],
+            ["choice", [{"data": [x, x]} for x in playableCharacters[currentCampaign].keys()]],
             ["button", [{"data": ["Choose character", "loadCampaign"]}]]
         ], True)
     else:
@@ -642,13 +634,12 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
     for key in toCheck:
         if key == "hasItem":
             for item in toCheck["hasItem"]: #This should loop through all characters within the team
-                for character in characterDict:
-                    if characterDict[character].checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
-                        if not needsAll:
-                            return True
-                    elif needsAll:
-                        hasAll = False
-                        break
+                if characters.checkHasItem(item[0] if isinstance(item, list) else item, "not" if isinstance(item, list) else "has"):
+                    if not needsAll:
+                        return True
+                elif needsAll:
+                    hasAll = False
+                    break
         elif key == "onTeam":
             for character in toCheck["onTeam"]: #Checks if a given npc is on the players team
                 if character in characters.onTeam or isinstance(character, list) and character[0] not in characters.onTeam:
