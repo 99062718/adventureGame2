@@ -290,11 +290,7 @@ def goToBase(): #Goes to player base where team members can be swapped out
 
     contentCreator([
         ["text", [{"data": ["Welcome to the base!"]}]],
-        ["button",[
-            {"data": ["Add to team", "addToTeamMenu"]},
-            {"data": ["Remove from team", "removeFromTeamMenu"]},
-            {"data": ["Exit base", "backToCampaign"]}
-        ]]
+        ["button", [{"data": data} for data in (["Add to team", "addToTeamMenu"], ["Remove from team", "removeFromTeamMenu"], ["Exit base", "backToCampaign"])]]
     ])
 
 def addToTeamMenu(): #Player can choose what character they want to add to their team
@@ -544,17 +540,19 @@ dialogue = { # concept dialogue list
 def openSettingsMenu(): #Opens settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([
-        ["button", [
-            {"data": ["Exit", "loadCampaign", ""]}, 
-            {"data": ["Current region", "currentRegion"]}, 
-            {"data": ["Inventory", "intoInventory"]},
-            {"data": ["Change party lines", "changePartyLine"]}
-        ]]
+        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "currentRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLine"])]]
     ])
 
-def intoInventory():
+def intoInventory(): #Opens inventory menu
     contentCreator([
-        ["choice", [{"data"}]]
+        ["text", [{"data": [text]} for text in ("Welcome to the inventory!", "What is it you want to do?")]],
+        ["choice", [{"data": data} for data in (["Remove item from character", "remove"], ["Add item to character", "add"], ["Check item stat", "stat"])]]
+    ])
+
+def inventoryFunctionality(): #Removes/adds items to characters or checks an items stat
+    contentCreator([
+        ["text", [{"data": ["Welcome to the inventory!"]}, {"data": ["Choose an item to do something with:"]}]],
+        ["choice", [{"data": [item, item]} for item in characters.inventory]]
     ])
 
 #--------------------------------------------------------------------------------Main menu stuff
@@ -615,6 +613,7 @@ functionList = {
     "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
+    "intoInventory": intoInventory,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
