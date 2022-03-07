@@ -168,25 +168,25 @@ class person: #Creates class from which characters and enemies inherit
         self._characterStats = {
             "name": characterData["name"],
             "health": characterData["health"],
-            "maxHealth": characterData["maxHealth" if "maxHealth" in characterData.keys() else "health"],
-            "attacks": characterData["attacks"] if "attacks" in characterData.keys() else [],
-            "attackMulti": characterData["attackMulti"] if "attackMulti" in characterData.keys() else 1,
-            "speed": characterData["speed"] if "speed" in characterData.keys() else 1,
-            "defense": characterData["defense"] if "defense" in characterData.keys() else 1,
+            "maxHealth": characterData["maxHealth" if characterData.get("maxHealth") else "health"],
+            "attacks": characterData["attacks"] if characterData.get("attacks") else [],
+            "attackMulti": characterData["attackMulti"] if characterData.get("attackMulti") else 1,
+            "speed": characterData["speed"] if characterData.get("speed") else 1,
+            "defense": characterData["defense"] if characterData.get("defense") else 1,
             "mana": characterData["mana"],
-            "maxMana": characterData["maxMana"] if "maxMana" in characterData.keys() else characterData["mana"],
-            "onLine": characterData["onLine"] if "onLine" in characterData.keys() else 0,
+            "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
+            "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
             "equippedItems": {
-                "left": characterData["equippedItems"]["left"] if "left" in characterData["equippedItems"].keys() else None,
-                "right": characterData["equippedItems"]["right"] if "right" in characterData["equippedItems"].keys() else None,
-                "head": characterData["equippedItems"]["head"] if "head" in characterData["equippedItems"].keys() else None,
-                "chest": characterData["equippedItems"]["chest"] if "chest" in characterData["equippedItems"].keys() else None,
-                "legs": characterData["equippedItems"]["legs"] if "legs" in characterData["equippedItems"].keys() else None,
-                "feet": characterData["equippedItems"]["feet"] if "feet" in characterData["equippedItems"].keys() else None,
-                "amulet": characterData["equippedItems"]["amulet"] if "amulet" in characterData["equippedItems"].keys() else None
+                "left": characterData["equippedItems"]["left"] if characterData["equippedItems"].get("left") else None,
+                "right": characterData["equippedItems"]["right"] if characterData["equippedItems"].get("right") else None,
+                "head": characterData["equippedItems"]["head"] if characterData["equippedItems"].get("head") else None,
+                "chest": characterData["equippedItems"]["chest"] if characterData["equippedItems"].get("chest") else None,
+                "legs": characterData["equippedItems"]["legs"] if characterData["equippedItems"].get("legs") else None,
+                "feet": characterData["equippedItems"]["feet"] if characterData["equippedItems"].get("feet") else None,
+                "amulet": characterData["equippedItems"]["amulet"] if characterData["equippedItems"].get("amulet") else None
             },
-            "lifeSteal": characterData["lifeSteal"] if "lifeSteal" in characterData.keys() else 0,
-            "dmgOverTime": characterData["dmgOverTime"] if "dmgOverTime" in characterData.keys() else []
+            "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
+            "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else []
         }
 
         for bodyPart, item in self._characterStats["equippedItems"].items():
@@ -272,8 +272,9 @@ class characters(person): #Used for characters that have been recruited or are p
             if value:
                 characters.teamEquiped.append(value)
 
-    def checkHasItem(self, item, notHas): #Should check if character has an item or not (not finished)
-        if item in characters.inventory and notHas == "has" or item not in characters.inventory and notHas == "not" or item in characters.teamEquiped and notHas == "has" or item not in characters.teamEquiped and notHas == "not":
+    @classmethod
+    def checkHasItem(cls, item, notHas): #Should check if character has an item or not (not finished)
+        if item in cls.inventory and notHas == "has" or item not in cls.inventory and notHas == "not" or item in cls.teamEquiped and notHas == "has" or item not in cls.teamEquiped and notHas == "not":
             return True
         return False
 
@@ -485,12 +486,12 @@ class npc: #Npc which can be recruited, talked to or bought things from
                 passedCheck = False
                 doBreak = False
 
-                if "subText" in dialogue[0].keys():
+                if dialogue[0].get("subText"):
                     pass
                 else:
-                    if "relation" in dialogue[0].keys(): #Checks emotion npc has for player
+                    if dialogue[0].get("relation"): #Checks emotion npc has for player
                         for emotion, value in dialogue[0]["relations"].items():
-                            if emotion in self.emotions.keys():
+                            if self.emotions.get(emotion):
                                 if value >= self.emotions[emotion]:
                                     passedCheck = True
                                 else:
@@ -503,7 +504,7 @@ class npc: #Npc which can be recruited, talked to or bought things from
                     if doBreak:
                         continue
 
-                    if "world" in dialogue[0].keys(): #Checks achievements player has accomplished
+                    if dialogue[0].get("world"): #Checks achievements player has accomplished
                         if checkIfHasAchievement(dialogue[0]["world"], needsAll=True):
                             passedCheck = True
 
@@ -571,7 +572,7 @@ def showTeamList(chosenFunctionality): #Shows list of characters that can be cho
     if playerAnswer.get():
         contentCreator([
             ["text", [{"data": ["Choose a character"]}]],
-            ["choice", [{"data": [character, character]} for character in characterDict.keys()]]
+            ["choice", [{"data": [character, character]} for character in characterDict.keys()]],
             ["button", [{"data": ["Choose character", "showCharacterItemList" if chosenFunctionality == "remove" else "chooseBodypart"]}]]
         ])
 
