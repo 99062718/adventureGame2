@@ -60,13 +60,13 @@ customItems = {
         "speed": 2,
         "attackMulti": 0.25,
         "dmgOverTime": ["wither"],
-        "bodyParts": ["left", "right"]
+        "bodyparts": ["left", "right"]
     },
     "truly humongous knife": {
         "speed": 5,
         "lifeSteal": 20,
         "dmgOverTime": ["fire", "poison"],
-        "bodyParts": ["left", "right"]
+        "bodyparts": ["left", "right"]
     }
 }
 
@@ -226,17 +226,19 @@ class person: #Creates class from which characters and enemies inherit
             self.changeItemModifyer(pastItem, True)
             characters.teamEquiped.remove(pastItem)
             characters.inventory.append(pastItem)
+
         self._characterStats["equippedItems"][bodyPart] = item
-        self.changeItemModifyer(item)
-        if self.checkStat("name") in characterDict.keys():
-            characters.teamEquiped.append(item)
+
+        if item:
+            self.changeItemModifyer(item)
+            if self.checkStat("name") in characterDict.keys():
+                characters.teamEquiped.append(item)
+                characters.inventory.remove(item)
 
     def checkItem(self, bodyPart):
         return self._characterStats["equippedItems"][bodyPart]
 
     def changeItemModifyer(self, item, remove=False): #Adds or removes item modifyer from person stats
-        toChange = None
-
         for modifier, value in customItems[item].items():
             match modifier: #Gives an error in my IDE. Works perfectly though...
                 case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "lifeSteal" | "defense"):
@@ -563,11 +565,10 @@ def showInventoryItemList(): #Shows list of items that can be chosen
         contentCreator([
             ["text", [{"data": [f"Choose an item to {text}:"]}]],
             ["choice", [{"data": [item, item]} for item in characters.inventory]],
-            ["button", [{"data": ["Choose item", "executeItemFunc" if playerAnswer.get() == "check" else "showTeamList"]}]]
+            ["button", [{"data": ["Choose item", "executeItemFunc" if playerAnswer.get() == "stat" else "showTeamList"]}]]
         ], {"functionality": playerAnswer.get()})
 
 def showTeamList(data): #Shows list of characters that can be chosen
-    print('hi')
     text = "give item" if data["functionality"] == "add" else "take item from"
 
     if playerAnswer.get():
@@ -580,17 +581,26 @@ def showTeamList(data): #Shows list of characters that can be chosen
             ["button", [{"data": ["Choose character", "chooseBodypart"]}]]
         ], data)
 
-def chooseBodypart(data): #Choose bodypart to add/rem[{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")]ove item from
+def chooseBodypart(data): #Choose bodypart to add/remove item from
     if playerAnswer.get():
         data["character"] = playerAnswer.get()
+        choiceArray = [{"data": [f"{bodypart} - {item}", bodypart]} for bodypart, item in characterDict[data["character"]].checkStat("equippedItems").items() if item] if data["functionality"] == "remove" else [{"data": [f"{bodypart} - {item}", bodypart]} for bodypart, item in characterDict[data["character"]].checkStat("equippedItems").items() if bodypart in customItems[data["item"]]["bodyparts"]]
         contentCreator([
             ["text", [{"data": ["Choose a bodypart to edit item of:"]}]],
-            ["choice", [{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")] 
-            if data["functionality"] == "add" else [{"data": [f"{bodypart} - {item}", bodypart]} for bodypart, item in characterDict[data["character"]].checkStat("equippedItems").items()]]
-        ])
+            ["choice", choiceArray],
+            ["button", [{"data": ["Choose bodypart", "executeItemFunc"]}]]
+        ], data)
 
-def executeItemFunc(chosenFunctionality):
-    pass
+def executeItemFunc(data): #adds/removes items from character or checks item stat
+    if playerAnswer.get():
+        if data["functionality"] == "add":
+            characterDict[data["character"]].setItem(playerAnswer.get(), data["item"])
+        elif data["functionality"] == "remove":
+            characterDict[data["character"]].setItem(playerAnswer.get(), None)
+        else:
+            text = "".join([f"{modifier}: {value}\n" for modifier, value in customItems[playerAnswer.get()].items()])
+            messagebox.showinfo(message=text)
+        openSettingsMenu()
 
 #--------------------------------------------------------------------------------Main menu stuff
 
