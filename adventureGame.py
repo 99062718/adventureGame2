@@ -555,30 +555,37 @@ def intoInventory(): #Opens inventory menu
 
 def showInventoryItemList(): #Shows list of items that can be chosen
     if playerAnswer.get() == "remove":
-        showTeamList(playerAnswer.get())
+        return showTeamList({"functionality": playerAnswer.get()})
 
     if playerAnswer.get():
-        text = playerAnswer.get() if playerAnswer.get() in "add" else "check stat of"
+        text = playerAnswer.get() if playerAnswer.get() == "add" else "check stat of"
 
         contentCreator([
             ["text", [{"data": [f"Choose an item to {text}:"]}]],
             ["choice", [{"data": [item, item]} for item in characters.inventory]],
             ["button", [{"data": ["Choose item", "executeItemFunc" if playerAnswer.get() == "check" else "showTeamList"]}]]
-        ], playerAnswer.get())
+        ], {"functionality": playerAnswer.get()})
 
-def showTeamList(chosenFunctionality): #Shows list of characters that can be chosen
-    text = "give item" if chosenFunctionality == "add" else "take item from"
+def showTeamList(data): #Shows list of characters that can be chosen
+    text = "give item" if data["functionality"] == "add" else "take item from"
 
     if playerAnswer.get():
+        if data["functionality"] == "add":
+            data["item"] = playerAnswer.get()
+
         contentCreator([
             ["text", [{"data": ["Choose a character"]}]],
-            ["choice", [{"data": [character, character]} for character in characterDict.keys()]],
-            ["button", [{"data": ["Choose character", "showCharacterItemList" if chosenFunctionality == "remove" else "chooseBodypart"]}]]
-        ])
+            ["choice", [{"data": [character, character]} for character in characterDict]],
+            ["button", [{"data": ["Choose character", "chooseBodypart"]}]]
+        ], data)
 
-def showCharacterItemList():
+def chooseBodypart(data): #Choose bodypart to add/remove item from
     if playerAnswer.get():
-        pass
+        data["character"] = playerAnswer.get()
+        contentCreator([
+            ["text", [{"data": ["Choose a bodypart to edit item of:"]}]],
+            ["choice", [{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")]]
+        ])
 
 def executeItemFunc(chosenFunctionality):
     pass
