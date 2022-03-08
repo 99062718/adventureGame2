@@ -550,7 +550,7 @@ def intoInventory(): #Opens inventory menu
     contentCreator([
         ["text", [{"data": [text]} for text in ("Welcome to the inventory!", "What is it you want to do?")]],
         ["choice", [{"data": data} for data in (["Remove item from character", "remove"], ["Add item to character", "add"], ["Check item stat", "stat"])]],
-        ["button", [{"data": ["Choose functionality", "showItemList"]}]]
+        ["button", [{"data": ["Choose functionality", "showInventoryItemList"]}]]
     ])
 
 def showInventoryItemList(): #Shows list of items that can be chosen
@@ -567,6 +567,7 @@ def showInventoryItemList(): #Shows list of items that can be chosen
         ], {"functionality": playerAnswer.get()})
 
 def showTeamList(data): #Shows list of characters that can be chosen
+    print('hi')
     text = "give item" if data["functionality"] == "add" else "take item from"
 
     if playerAnswer.get():
@@ -579,12 +580,13 @@ def showTeamList(data): #Shows list of characters that can be chosen
             ["button", [{"data": ["Choose character", "chooseBodypart"]}]]
         ], data)
 
-def chooseBodypart(data): #Choose bodypart to add/remove item from
+def chooseBodypart(data): #Choose bodypart to add/rem[{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")]ove item from
     if playerAnswer.get():
         data["character"] = playerAnswer.get()
         contentCreator([
             ["text", [{"data": ["Choose a bodypart to edit item of:"]}]],
-            ["choice", [{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")]]
+            ["choice", [{"data": [bodypart, bodypart]} for bodypart in characterDict[data["character"]].checkStat("equippedItems")] 
+            if data["functionality"] == "add" else [{"data": [f"{bodypart} - {item}", bodypart]} for bodypart, item in characterDict[data["character"]].checkStat("equippedItems").items()]]
         ])
 
 def executeItemFunc(chosenFunctionality):
@@ -641,7 +643,9 @@ functionList = {
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
     "intoInventory": intoInventory,
-    "itemList": showInventoryItemList,
+    "showInventoryItemList": showInventoryItemList,
+    "showTeamList": showTeamList,
+    "chooseBodypart": chooseBodypart,
     "executeItemFunc": executeItemFunc,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
