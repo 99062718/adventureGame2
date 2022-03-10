@@ -161,6 +161,7 @@ content = [[], []]
 #--------------------------------------------------------------------------------Characters and enemies
 
 class person: #Creates class from which characters and enemies inherit
+    bodyparts = ["left", "right", "head", "chest", "legs", "feet", "amulet"]
 
     def __init__(self, characterData):
         self._characterStats = {
@@ -174,15 +175,7 @@ class person: #Creates class from which characters and enemies inherit
             "mana": characterData["mana"],
             "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
             "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
-            "equippedItems": {
-                "left": characterData["equippedItems"]["left"] if characterData["equippedItems"].get("left") else None,
-                "right": characterData["equippedItems"]["right"] if characterData["equippedItems"].get("right") else None,
-                "head": characterData["equippedItems"]["head"] if characterData["equippedItems"].get("head") else None,
-                "chest": characterData["equippedItems"]["chest"] if characterData["equippedItems"].get("chest") else None,
-                "legs": characterData["equippedItems"]["legs"] if characterData["equippedItems"].get("legs") else None,
-                "feet": characterData["equippedItems"]["feet"] if characterData["equippedItems"].get("feet") else None,
-                "amulet": characterData["equippedItems"]["amulet"] if characterData["equippedItems"].get("amulet") else None
-            },
+            "equippedItems": {bodypart: characterData["equippedItems"][bodypart] if characterData["equippedItems"].get(bodypart) else None for bodypart in self.bodyparts},
             "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
             "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else []
         }
@@ -212,15 +205,18 @@ class person: #Creates class from which characters and enemies inherit
         else:
             raise ValueError(f"{statToChange} is not an existing stat")
 
+        self.adjustStat(statToChange)
+        
+    def adjustStat(self, statToChange): #Adjusts stat when a certain value has been reached
         if statToChange in ["mana", "maxMana", "health", "maxHealth"]:
-            self.adjustStatToMax()
+            if self.checkStat("health") > self.checkStat("maxHealth"):
+                self.changeStat("set", "health", self.checkStat("maxHealth"))
+            
+            if self.checkStat("mana") > self.checkStat("maxMana"):
+                self.changeStat("set", "mana", self.checkStat("maxMana"))
         
-    def adjustStatToMax(self): #Adjusts stat to its max counterpart if its more than that
-        if self.checkStat("health") > self.checkStat("maxHealth"):
-            self.changeStat("set", "health", self.checkStat("maxHealth"))
-        
-        if self.checkStat("mana") > self.checkStat("maxMana"):
-            self.changeStat("set", "mana", self.checkStat("maxMana"))
+        if self._characterStats.get("currentAttack") and self._characterStats["currentAttack"] == len(self.checkStat("attacks")):
+            self.changeStat("set", "currentAttack", 0)
 
     def checkStat(self, statToCheck): #Checks value of given stat
         if statToCheck in self._characterStats:
@@ -341,6 +337,7 @@ class enemies(person): #Used for enemies currently in battle with
 
     def __init__(self, characterData):
         super().__init__(characterData)
+        self._characterStats["currentAttack"] = characterData["currentAttack"] if characterData.get("currentAttack") else 0
 
 #--------------------------------------------------------------------------------Room generation
 
@@ -467,6 +464,8 @@ def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     temp = list(turnList.items())
     temp.sort(key=lambda a: a[1][0], reverse=True)    
     turnList = dict(temp)
+
+#def goThroughTurns()
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
