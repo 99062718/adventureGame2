@@ -22,8 +22,6 @@ from tkinter.constants import OUTSIDE
 # - Add possibility for shops
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
-#Create inventory system (Normal importance)
-# - Items can be equipped from here
 #Create item support for characters (Normal importance)
 # - Items can give special bonusses like +atk, +def or +agility
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
@@ -48,7 +46,7 @@ from tkinter.constants import OUTSIDE
 #Bosses
 # - Bosses might be able to drop special items that can only be obtained from them
 #Rooms
-# - Dungeons (this is to fix balancing for battles and xp is extremely difficult as is)
+# - Dungeons (this is to fix balancing for battles and xp as it is extremely difficult as is)
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -213,6 +211,16 @@ class person: #Creates class from which characters and enemies inherit
                 raise ValueError(f"{changeHow} is not a valid way to change stat")
         else:
             raise ValueError(f"{statToChange} is not an existing stat")
+
+        if statToChange in ["mana", "maxMana", "health", "maxHealth"]:
+            self.adjustStatToMax()
+        
+def adjustStatToMax(self): #Adjusts stat to its max counterpart if its more than that
+    if self.checkStat("health") > self.checkStat("maxHealth"):
+        self.changeStat("set", "health", self.checkStat("maxHealth"))
+    
+    if self.checkStat("mana") > self.checkStat("maxMana"):
+        self.changeStat("set", "mana", self.checkStat("maxMana"))
 
     def checkStat(self, statToCheck): #Checks value of given stat
         if statToCheck in self._characterStats:
