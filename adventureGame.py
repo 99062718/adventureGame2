@@ -215,12 +215,12 @@ class person: #Creates class from which characters and enemies inherit
         if statToChange in ["mana", "maxMana", "health", "maxHealth"]:
             self.adjustStatToMax()
         
-def adjustStatToMax(self): #Adjusts stat to its max counterpart if its more than that
-    if self.checkStat("health") > self.checkStat("maxHealth"):
-        self.changeStat("set", "health", self.checkStat("maxHealth"))
-    
-    if self.checkStat("mana") > self.checkStat("maxMana"):
-        self.changeStat("set", "mana", self.checkStat("maxMana"))
+    def adjustStatToMax(self): #Adjusts stat to its max counterpart if its more than that
+        if self.checkStat("health") > self.checkStat("maxHealth"):
+            self.changeStat("set", "health", self.checkStat("maxHealth"))
+        
+        if self.checkStat("mana") > self.checkStat("maxMana"):
+            self.changeStat("set", "mana", self.checkStat("maxMana"))
 
     def checkStat(self, statToCheck): #Checks value of given stat
         if statToCheck in self._characterStats:
