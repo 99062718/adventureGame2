@@ -22,8 +22,6 @@ from tkinter.constants import OUTSIDE
 # - Add possibility for shops
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
-#Create item support for characters (Normal importance)
-# - Items can give special bonusses like +atk, +def or +agility
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
 # - Gold and xp obtained from killing enemies should be a mix between random and set
 #Create settings menu with current zone, health, cheatcodes, ect (Parity)
@@ -34,7 +32,6 @@ from tkinter.constants import OUTSIDE
 
 #Ideas to flesh the game out a bit more:
 #Items
-# - Life steal
 # - Durability (dont have to be used for every item)
 # - Consumables
 # - Extra loot dropped (higher chance at enemy dropping their items or more gold)
@@ -43,6 +40,7 @@ from tkinter.constants import OUTSIDE
 # - Items that are better against certain types of monsters
 #Battle
 # - A template system so that frequently used enemy combos dont have to constantly be written out in its entirety
+# - Some kind of AOI attack that hits all enemies on a line (could also be crosslined)
 #Bosses
 # - Bosses might be able to drop special items that can only be obtained from them
 #Rooms
@@ -469,10 +467,25 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
     attackable = [[character, characterDict[character].checkStat("onLine")] for character in characters.onTeam if characterDict[character].checkStat("health") > 0]
     attackable.sort(key=lambda a: a[1])
     toAttack = attackable[0][0]
+
     attack = customAttacks[enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]]
-    attackDMG = round(attack["damage"] / characterDict[toAttack].checkStat("defense"))
+    attackDMG = round(attack["damage"] * enemyDict[attacker].checkStat("attackMulti") / characterDict[toAttack].checkStat("defense"))
     lifeSteal = (attack.get("lifeSteal") if attack.get("lifeSteal") else 0) + enemyDict[attacker].checkStat("lifeSteal")
     lifeStealValue = (100 if lifeSteal > 100 else lifeSteal) * attackDMG / 100
+
+    characterDict[toAttack].changeStat("subtract", "health", attackDMG)
+    enemyDict[attacker].changeStat("add", "health", lifeStealValue)
+
+    printAttack([
+        f"{attacker} used {attack} on {toAttack} for {attackDMG} damage!", 
+        f"{attacker} healed {lifeStealValue} from life steal" if lifeSteal else None, 
+        f"{toAttack} has died!" if characterDict[toAttack].checkStat("health") <= 0 else None
+    ])
+
+def printAttack(toPrint): #Prints events happening during attack
+    for text in toPrint:
+        if text:
+            messagebox.showinfo(message=text)
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
