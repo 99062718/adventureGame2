@@ -429,6 +429,8 @@ def backToCampaign(): #Goes back to where campaign left off
 #   "turns": [insert list of when characters can attack and whos turn it is]
 # }
 
+#-------------------------------------------------Creation
+
 def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
     usedEnemiesDict = {}
     for enemyName, enemyData in roomContent["enemies"].items():
@@ -450,6 +452,8 @@ def createEnemy(enemyName, enemyData): #Creates enemy
     enemyToAdd["onLine"] = onLine
 
     return enemies(customEnemies[enemyName])
+
+#-------------------------------------------------Turn logic
 
 def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     turnList = {}
@@ -473,17 +477,28 @@ def goThroughTurns(turnList, enemyDict): #Goes through all characters in turnLis
         elif not aliveEnemies: #Should trigger ifWin
             pass
 
-        if data[1] == "enemy" and enemyDict[name].checkStat("health") > 0:
+        if data[1] == "enemy" and enemyDict.get(name):
             enemyAttack(enemyDict, name)
         elif data[1] == "character" and characterDict[name].checkStat("health") > 0:
             playerAttack(enemyDict, name)
+
+#-------------------------------------------------Enemy logic
 
 def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
     attackable = [[character, characterDict[character].checkStat("onLine")] for character in characters.onTeam if characterDict[character].checkStat("health") > 0]
     attackable.sort(key=lambda a: a[1])
     toAttack = attackable[0][0]
 
-    attack = customAttacks[enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]]
+    while True:
+        attack = customAttacks[enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]]
+        if customAttacks[attack].get("mana"):
+            if customAttacks[attack]["mana"] > enemyDict[attacker].checkStat("mana"):
+                enemyDict[attacker].changeStat("add", "currentAttack", 1)
+                continue
+            else:
+                enemyDict[attacker.changeStat]("subtract", "mana", customAttacks[attack]["mana"])
+        break
+
     attackDMG = round(attack["damage"] * enemyDict[attacker].checkStat("attackMulti") / characterDict[toAttack].checkStat("defense"))
     lifeSteal = (attack.get("lifeSteal") if attack.get("lifeSteal") else 0) + enemyDict[attacker].checkStat("lifeSteal")
     lifeStealValue = (100 if lifeSteal > 100 else lifeSteal) * attackDMG / 100
@@ -496,6 +511,17 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
         f"{attacker} healed {lifeStealValue} from life steal" if lifeSteal else None, 
         f"{toAttack} has died!" if characterDict[toAttack].checkStat("health") <= 0 else None
     ])
+
+#-------------------------------------------------Player logic
+
+def chooseEnemy(enemyDict, name):
+    contentCreator([
+        ["text", [{"data": [f"It's {name}'s turn!"]}, {"data": ["Who will you attack?"]}]],
+        ["choice", [{"data": [enemy, enemy]} for enemy in enemyDict if enemyDict.get(enemy)]],
+        ["button", [{"data": ["Choose enemy", "chooseAttack"]}]]
+    ])
+
+#-------------------------------------------------Uncatagorised
 
 def printAttack(toPrint): #Prints events happening during attack
     for text in toPrint:
