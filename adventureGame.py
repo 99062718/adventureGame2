@@ -480,7 +480,7 @@ def goThroughTurns(turnList, enemyDict): #Goes through all characters in turnLis
         if data[1] == "enemy" and enemyDict.get(name):
             enemyAttack(enemyDict, name)
         elif data[1] == "character" and characterDict[name].checkStat("health") > 0:
-            playerAttack(enemyDict, name)
+            chooseEnemy(enemyDict, name)
 
 #-------------------------------------------------Enemy logic
 
@@ -515,11 +515,21 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
 #-------------------------------------------------Player logic
 
 def chooseEnemy(enemyDict, name):
+    data = {"enemies": enemyDict, "attacker": name}
     contentCreator([
         ["text", [{"data": [f"It's {name}'s turn!"]}, {"data": ["Who will you attack?"]}]],
-        ["choice", [{"data": [enemy, enemy]} for enemy in enemyDict if enemyDict.get(enemy)]],
+        ["choice", [{"data": [enemyData.checkStat("name"), enemy]} for enemy, enemyData in enemyDict.items() if enemyData]],
         ["button", [{"data": ["Choose enemy", "chooseAttack"]}]]
-    ])
+    ], data)
+
+def chooseAttack(data):
+    if playerAnswer.get():
+        data["toAttack"] = playerAnswer.get()
+        contentCreator([
+            ["text", [{"data": ["What attack will you use?"]}]],
+            ["choice", [{"data": [attack, attack]} for attack in characterDict[data["name"]].checkStat("attacks")]],
+            ["button", [{"data": ["Choose attack", "playerAttack"]}]]
+        ], data)
 
 #-------------------------------------------------Uncatagorised
 
@@ -729,7 +739,8 @@ functionList = {
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
     "removeFromTeam": removeFromTeam,
-    "backToCampaign": backToCampaign
+    "backToCampaign": backToCampaign,
+    "chooseAttack": chooseAttack
 }
 
 #--------------------------------------------------------------------------------Not catagorized yet
