@@ -463,6 +463,13 @@ def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     temp.sort(key=lambda a: a[1][0], reverse=True)    
     turnList = dict(temp)
 
+def goThroughTurns(turnList, enemyDict): #Goes through all characters in turnList
+    for name, data in turnList:
+        if data[1] == "enemy" and enemyDict[name].checkStat("health") > 0:
+            enemyAttack(enemyDict, name)
+        elif data[1] == "character" and characterDict[name].checkStat("health") > 0:
+            playerAttack(enemyDict, name)
+
 def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
     attackable = [[character, characterDict[character].checkStat("onLine")] for character in characters.onTeam if characterDict[character].checkStat("health") > 0]
     attackable.sort(key=lambda a: a[1])
