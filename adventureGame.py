@@ -465,6 +465,14 @@ def turnCalculator(enemyDict): #Calculates turns of every person based on speed
 
 def goThroughTurns(turnList, enemyDict): #Goes through all characters in turnList
     for name, data in turnList:
+        aliveCharacters = [character for character in turnList if turnList[character][1] == "character" and characterDict[character].checkStat("health") > 0]
+        aliveEnemies = [enemy for enemy in turnList if turnList[enemy][1] == "enemy" and enemyDict[enemy].checkStat("health") > 0]
+
+        if not aliveCharacters: #Should trigger ifLose
+            pass
+        elif not aliveEnemies: #Should trigger ifWin
+            pass
+
         if data[1] == "enemy" and enemyDict[name].checkStat("health") > 0:
             enemyAttack(enemyDict, name)
         elif data[1] == "character" and characterDict[name].checkStat("health") > 0:
