@@ -514,15 +514,19 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
 
 #-------------------------------------------------Player logic
 
-def chooseEnemy(enemyDict, name):
+def chooseEnemy(enemyDict, name): #Shows menu for attacking enemies
+    onLineEnemies = [[enemy, enemyData.checkStat("onLine")] for enemy, enemyData in enemyDict.items() if enemyData]
+    onLineEnemies.sort(key=lambda a: a[1])
+    attackable = [enemy for enemy in onLineEnemies if enemy[1] == onLineEnemies[0][1]]
+
     data = {"enemies": enemyDict, "attacker": name}
     contentCreator([
         ["text", [{"data": [f"It's {name}'s turn!"]}, {"data": ["Who will you attack?"]}]],
-        ["choice", [{"data": [enemyData.checkStat("name"), enemy]} for enemy, enemyData in enemyDict.items() if enemyData]],
+        ["choice", [{"data": [enemyDict[enemy[0]].checkStat("name"), enemy[0]]} for enemy in attackable]],
         ["button", [{"data": ["Choose enemy", "chooseAttack"]}]]
     ], data)
 
-def chooseAttack(data):
+def chooseAttack(data): #Shows menu for attacks to use
     if playerAnswer.get():
         data["toAttack"] = playerAnswer.get()
         contentCreator([
@@ -530,6 +534,14 @@ def chooseAttack(data):
             ["choice", [{"data": [attack, attack]} for attack in characterDict[data["name"]].checkStat("attacks")]],
             ["button", [{"data": ["Choose attack", "playerAttack"]}]]
         ], data)
+
+def playerAttack(data): #Logic for attacks
+    if playerAnswer.get():
+        if customAttacks[playerAnswer.get()].get("mana"):
+            if customAttacks[playerAnswer.get()]["mana"] > characterDict[data["name"]].checkStat("mana"):
+                messagebox.showerror(message="You dont have enough mana to do this attack!")
+                return
+            characterDict[data["name"]].changeStat("subtract", "mana", customAttacks[playerAnswer.get()]["mana"])
 
 #-------------------------------------------------Uncatagorised
 
@@ -740,7 +752,8 @@ functionList = {
     "removeFromTeamMenu": removeFromTeamMenu,
     "removeFromTeam": removeFromTeam,
     "backToCampaign": backToCampaign,
-    "chooseAttack": chooseAttack
+    "chooseAttack": chooseAttack,
+    "playerAttack": playerAttack
 }
 
 #--------------------------------------------------------------------------------Not catagorized yet
