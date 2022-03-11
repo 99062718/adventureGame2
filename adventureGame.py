@@ -465,7 +465,14 @@ def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     temp.sort(key=lambda a: a[1][0], reverse=True)    
     turnList = dict(temp)
 
-#def goThroughTurns()
+def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
+    attackable = [[character, characterDict[character].checkStat("onLine")] for character in characters.onTeam if characterDict[character].checkStat("health") > 0]
+    attackable.sort(key=lambda a: a[1])
+    toAttack = attackable[0][0]
+    attack = customAttacks[enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]]
+    attackDMG = round(attack["damage"] / characterDict[toAttack].checkStat("defense"))
+    lifeSteal = (attack.get("lifeSteal") if attack.get("lifeSteal") else 0) + enemyDict[attacker].checkStat("lifeSteal")
+    lifeStealValue = (100 if lifeSteal > 100 else lifeSteal) * attackDMG / 100
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
