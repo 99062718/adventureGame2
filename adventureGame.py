@@ -6,12 +6,14 @@ from tkinter.constants import OUTSIDE
 #To do:
 #Create room system (Very important!!)
 # - Add battle roomType that can auto detect if its a normal or boss battle
-# - Add both ifWin and ifLose into battle
 # - Add extra settings that count for the entire campaign (such as party size limits)
+# - Implement "goTo next" and defaults for choiceEvents
+# - Losing battle should trigger save state if ifLose hasent been specified
 #Create battle system (the line layer system) (Important)
 # - Npcs and the player can be moved from line to line during their turn
 # - Npcs and player attacks can be removed and added
 # - Attacks can be learned by either leveling up or buying them from a shop
+# - Characters health and mana should be refilled after battle
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -344,15 +346,16 @@ def roomTypeCheck(currentRoom): #Checks roomType of room
     else:
         raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
 
-def nextRoom(data): #Goes to next room
+def nextRoom(data, pseudoAnswer=None): #Goes to next room
     global currentRegion
-    if playerAnswer.get() in data.keys():
-        if data[playerAnswer.get()][0] == "goTo": #Goes to given room (should also use saveData function)
-            currentRegion = [data[playerAnswer.get()][1], data[playerAnswer.get()][2]]
+    answer = pseudoAnswer if pseudoAnswer else playerAnswer.get()
+    if answer in data.keys():
+        if data[answer][0] == "goTo": #Goes to given room (should also use saveData function)
+            currentRegion = [data[answer][1], data[answer][2]]
             roomTypeCheck(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]])
-        elif data[playerAnswer.get()][0] == "talkTo": #Goes into dialogue menu with npc
-            talkTo(playerAnswer.get())
-        elif data[playerAnswer.get()][0] == "base": #Goes to player base
+        elif data[answer][0] == "talkTo": #Goes into dialogue menu with npc
+            talkTo(answer)
+        elif data[answer][0] == "base": #Goes to player base
             goToBase()
     else:
         messagebox.showerror(message="Please select one of the choices")
@@ -415,20 +418,19 @@ def backToCampaign(): #Goes back to where campaign left off
                 "roomType": "battle",
                 "content": {
                     "boss": ["henk"],
-                    "enemies": {"evil dave": {"timesAppear": 2}},
-                    "text": ["bla bla evil plot bla bla"]
+                    "enemies": {"evil dave": {"timesAppear": 2}}
+                },
+                "choiceEvents": {
+                    "ifWin": ["goTo", "next"],
+                    "ifLose": ["goTo", "prison", 2] #Not entering this should just result into a load of save when battle is lost
                 }
             }
-
-# { list to visualize how i want to store save data during battle
-#   "currentEnemies": [insert list here],
-#   "turns": [insert list of when characters can attack and whos turn it is]
-# }
 
 #-------------------------------------------------Creation
 
 def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
     usedEnemiesDict = {}
+    enemies.onTeam = []
     for enemyName, enemyData in roomContent["enemies"].items():
         timesAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
         if timesAppear == 1:
@@ -471,9 +473,10 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
     aliveEnemies = [enemy[0] for enemy in turnList if enemy[2] == "enemy" and enemyDict[enemy[0]].checkStat("health") > 0]
 
     if not aliveCharacters: #Should trigger ifLose
-        return print(aliveCharacters, aliveEnemies)
+        if campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"].get("ifLose"):
+            return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifLose")
     elif not aliveEnemies: #Should trigger ifWin
-        return print(aliveEnemies, aliveCharacters)
+        return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifWin")
 
     if turnNum >= len(turnList):
         return turnCalculator(enemyDict)
@@ -544,7 +547,7 @@ def chooseAttack(data): #Shows menu for attacks to use
             ["button", [{"data": ["Choose attack", "playerAttack"]}]]
         ], data)
 
-def playerAttack(data): #Logic for attacks
+def playerAttack(data): #Logic for player attacks
     global currentRegionExtra
 
     if playerAnswer.get():
