@@ -161,7 +161,7 @@ content = [[], []]
 class person: #Creates class from which characters and enemies inherit
     bodyparts = ["left", "right", "head", "chest", "legs", "feet", "amulet"]
 
-    def __init__(self, characterData):
+    def __init__(self, characterData, loadFromSave=False):
         self._characterStats = {
             "name": characterData["name"],
             "health": characterData["health"],
@@ -173,14 +173,15 @@ class person: #Creates class from which characters and enemies inherit
             "mana": characterData["mana"],
             "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
             "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
-            "equippedItems": {bodypart: characterData["equippedItems"][bodypart] if characterData["equippedItems"].get(bodypart) else None for bodypart in self.bodyparts},
+            "equippedItems": {bodypart: characterData["equippedItems"].get(bodypart) for bodypart in self.bodyparts},
             "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
             "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else []
         }
 
-        for bodyPart, item in self._characterStats["equippedItems"].items():
-            if item:
-                self.changeItemModifyer(item)
+        if not loadFromSave:
+            for bodyPart, item in self._characterStats["equippedItems"].items():
+                if item:
+                    self.changeItemModifyer(item)
 
 
     def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
@@ -456,41 +457,49 @@ def createEnemy(enemyName, enemyData): #Creates enemy
 #-------------------------------------------------Turn logic
 
 def turnCalculator(enemyDict): #Calculates turns of every person based on speed
-    turnList = {}
+    global currentRegionExtra
+    turnList = []
     for character in characters.onTeam:
-        turnList[character] = [characterDict[character].checkStat("speed"), "character"]
+        turnList.append([character, characterDict[character].checkStat("speed"), "character"])
         
     for enemy in enemies.onTeam:
-        turnList[enemy] = [enemyDict[enemy].checkStat("speed"), "enemy"]
+        turnList.append([enemy, enemyDict[enemy].checkStat("speed"), "enemy"])
 
-    temp = list(turnList.items())
-    temp.sort(key=lambda a: a[1][0], reverse=True)    
-    turnList = dict(temp)
+    turnList.sort(key=lambda a: a[1], reverse=True)
+    turnInnitializer(turnList, enemyDict, 0)
 
-def goThroughTurns(turnList, enemyDict): #Goes through all characters in turnList
-    for name, data in turnList:
-        aliveCharacters = [character for character in turnList if turnList[character][1] == "character" and characterDict[character].checkStat("health") > 0]
-        aliveEnemies = [enemy for enemy in turnList if turnList[enemy][1] == "enemy" and enemyDict[enemy].checkStat("health") > 0]
+def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn related
+    global currentRegionExtra
+    currentRegionExtra["battle"] = {"enemies": enemyDict, "turn": turnNum, "turns": turnList}
 
-        if not aliveCharacters: #Should trigger ifLose
-            pass
-        elif not aliveEnemies: #Should trigger ifWin
-            pass
+    aliveCharacters = [character[0] for character in turnList if character[2] == "character" and characterDict[character[0]].checkStat("health") > 0]
+    aliveEnemies = [enemy[0] for enemy in turnList if enemy[2] == "enemy" and enemyDict[enemy[0]].checkStat("health") > 0]
 
-        if data[1] == "enemy" and enemyDict.get(name):
-            enemyAttack(enemyDict, name)
-        elif data[1] == "character" and characterDict[name].checkStat("health") > 0:
-            chooseEnemy(enemyDict, name)
+    if not aliveCharacters: #Should trigger ifLose
+        return print(aliveCharacters, aliveEnemies)
+    elif not aliveEnemies: #Should trigger ifWin
+        return print(aliveEnemies, aliveCharacters)
+
+    if turnNum >= len(turnList):
+        return turnCalculator(enemyDict)
+
+    if turnList[turnNum][2] and enemyDict.get(turnList[turnNum][0]):
+        enemyAttack(turnList[turnNum][0])
+    elif turnList[turnNum][2] == "character" and characterDict[turnList[turnNum][0]].checkStat("health") > 0:
+        chooseEnemy(turnList[turnNum][0])
+    else:
+        turnInnitializer(turnList, enemyDict, turnNum + 1)
 
 #-------------------------------------------------Enemy logic
 
-def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
+def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
+    enemyDict = currentRegionExtra["battle"]["enemies"]
     attackable = [[character, characterDict[character].checkStat("onLine")] for character in characters.onTeam if characterDict[character].checkStat("health") > 0]
     attackable.sort(key=lambda a: a[1])
     toAttack = attackable[0][0]
 
     while True:
-        attack = customAttacks[enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]]
+        attack = enemyDict[attacker].checkStat("attacks")[enemyDict[attacker].checkStat("currentAttack")]
         if customAttacks[attack].get("mana"):
             if customAttacks[attack]["mana"] > enemyDict[attacker].checkStat("mana"):
                 enemyDict[attacker].changeStat("add", "currentAttack", 1)
@@ -499,8 +508,8 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
                 enemyDict[attacker.changeStat]("subtract", "mana", customAttacks[attack]["mana"])
         break
 
-    attackDMG = round(attack["damage"] * enemyDict[attacker].checkStat("attackMulti") / characterDict[toAttack].checkStat("defense"))
-    lifeSteal = (attack.get("lifeSteal") if attack.get("lifeSteal") else 0) + enemyDict[attacker].checkStat("lifeSteal")
+    attackDMG = round(customAttacks[attack]["damage"] * enemyDict[attacker].checkStat("attackMulti") / characterDict[toAttack].checkStat("defense"))
+    lifeSteal = (customAttacks[attack].get("lifeSteal") if customAttacks[attack].get("lifeSteal") else 0) + enemyDict[attacker].checkStat("lifeSteal")
     lifeStealValue = (100 if lifeSteal > 100 else lifeSteal) * attackDMG / 100
 
     characterDict[toAttack].changeStat("subtract", "health", attackDMG)
@@ -511,6 +520,8 @@ def enemyAttack(enemyDict, attacker): #Enemy attack oOoooOOooOooOOOO
         f"{attacker} healed {lifeStealValue} from life steal" if lifeSteal else None, 
         f"{toAttack} has died!" if characterDict[toAttack].checkStat("health") <= 0 else None
     ])
+
+    turnInnitializer(currentRegionExtra["battle"]["turns"], enemyDict, currentRegionExtra["battle"]["turn"] + 1)
 
 #-------------------------------------------------Player logic
 
