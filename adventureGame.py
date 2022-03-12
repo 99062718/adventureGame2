@@ -6,17 +6,12 @@ from tkinter.constants import OUTSIDE
 #To do:
 #Create room system (Very important!!)
 # - Add battle roomType that can auto detect if its a normal or boss battle
-# - In battle roomType all that has to be entered in content are the enemies and the min/max amount there is supposed to be of them
 # - Add both ifWin and ifLose into battle
 # - Add extra settings that count for the entire campaign (such as party size limits)
 #Create battle system (the line layer system) (Important)
-# - Npc attacks are controlled by the player
-# - If an entity stands on a higher line. Those on lines behind it cannot be attacked but can still attacked
 # - Npcs and the player can be moved from line to line during their turn
 # - Npcs and player attacks can be removed and added
 # - Attacks can be learned by either leveling up or buying them from a shop
-# - Every character has mana. Some attacks take mana and others dont. If mana reaches 0 the mana attacks cannot be used anymore
-# - Add check to see if battle already exists within currentRegionExtra
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -300,7 +295,7 @@ def addToTeamMenu(): #Player can choose what character they want to add to their
     if len(characters.onTeam) < len(characterDict):
         contentCreator([
             ["text", [{"data": ["Which character would you like to add to your party?"]}]],
-            ["choice", [{"data": [character, character], "blockIf": {"onTeam": [character]}} for character in characterDict]],
+            ["choice", [{"data": [character, character], "blockIf": {"onTeam": character}} for character in characterDict]],
             ["button", [{"data": ["Choose character", "addToTeam"]}, {"data": ["Back", "goToBase"]}]]
         ])
     else:
