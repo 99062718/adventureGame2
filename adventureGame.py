@@ -76,7 +76,7 @@ playableCharacters = {
     "campaign": {
         "hero": {
             "name": "hero the 4th",
-            "health": 100,
+            "health": 1000,
             "mana": 0,
             "attacks": ["blazing sun"],
             "equippedItems":{
@@ -261,9 +261,6 @@ class person: #Creates class from which characters and enemies inherit
         else:
             return False
 
-    def deleteSelf(self):
-        del self
-
 #-------------------------------------------------Characters
 
 class characters(person): #Used for characters that have been recruited or are present within the team
@@ -338,6 +335,10 @@ class enemies(person): #Used for enemies currently in battle with
         super().__init__(characterData)
         self._characterStats["currentAttack"] = characterData["currentAttack"] if characterData.get("currentAttack") else 0
 
+    def deleteSelf(self, name):
+        enemies.onTeam.remove(name)
+        del self
+
 #--------------------------------------------------------------------------------Room generation
 
 def roomTypeCheck(currentRoom): #Checks roomType of room
@@ -359,7 +360,6 @@ def nextRoom(data): #Goes to next room
         elif data[playerAnswer.get()][0] == "base": #Goes to player base
             goToBase()
     else:
-        print(playerAnswer.get(), data)
         messagebox.showerror(message="Please select one of the choices")
 
 def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back again. Not content thats for sure!
@@ -483,7 +483,7 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
     if turnNum >= len(turnList):
         return turnCalculator(enemyDict)
 
-    if turnList[turnNum][2] and enemyDict.get(turnList[turnNum][0]):
+    if turnList[turnNum][2] == "enemy" and enemyDict[turnList[turnNum][0]].checkStat("health") > 0:
         enemyAttack(turnList[turnNum][0])
     elif turnList[turnNum][2] == "character" and characterDict[turnList[turnNum][0]].checkStat("health") > 0:
         chooseEnemy(turnList[turnNum][0])
@@ -515,9 +515,11 @@ def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
     characterDict[toAttack].changeStat("subtract", "health", attackDMG)
     enemyDict[attacker].changeStat("add", "health", lifeStealValue)
 
+    attackerName = enemyDict[attacker].checkStat("name")
+
     printAttack([
-        f"{attacker} used {attack} on {toAttack} for {attackDMG} damage!", 
-        f"{attacker} healed {lifeStealValue} from life steal" if lifeSteal else None, 
+        f"{attackerName} used {attack} on {toAttack} for {attackDMG} damage!", 
+        f"{attackerName} healed {lifeStealValue} from life steal" if lifeSteal else None, 
         f"{toAttack} has died!" if characterDict[toAttack].checkStat("health") <= 0 else None
     ])
 
@@ -527,7 +529,7 @@ def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
 
 def chooseEnemy(name): #Shows menu for attacking enemies
     enemyDict = currentRegionExtra["battle"]["enemies"]
-    onLineEnemies = [[enemy, enemyData.checkStat("onLine")] for enemy, enemyData in enemyDict.items() if enemyData]
+    onLineEnemies = [[enemy, enemyData.checkStat("onLine")] for enemy, enemyData in enemyDict.items() if enemyData.checkStat("health") > 0]
     onLineEnemies.sort(key=lambda a: a[1])
     attackable = [enemy for enemy in onLineEnemies if enemy[1] == onLineEnemies[0][1]]
 
@@ -548,12 +550,35 @@ def chooseAttack(data): #Shows menu for attacks to use
         ], data)
 
 def playerAttack(data): #Logic for attacks
+    global currentRegionExtra
+
     if playerAnswer.get():
         if customAttacks[playerAnswer.get()].get("mana"):
             if customAttacks[playerAnswer.get()]["mana"] > characterDict[data["attacker"]].checkStat("mana"):
                 messagebox.showerror(message="You dont have enough mana to do this attack!")
                 return
             characterDict[data["attacker"]].changeStat("subtract", "mana", customAttacks[playerAnswer.get()]["mana"])
+
+        attackDMG = round(customAttacks[playerAnswer.get()]["damage"] * characterDict[data["attacker"]].checkStat("attackMulti") / data["enemies"][data["toAttack"]].checkStat("defense"))
+        lifeSteal = (customAttacks[playerAnswer.get()].get("lifeSteal") if customAttacks[playerAnswer.get()].get("lifeSteal") else 0) + characterDict[data["attacker"]].checkStat("lifeSteal")
+        lifeStealValue = (100 if lifeSteal > 100 else lifeSteal) * attackDMG / 100
+
+        data["enemies"][data["toAttack"]].changeStat("subtract", "health", attackDMG)
+        characterDict[data["attacker"]].changeStat("add", "health", lifeStealValue)
+
+        enemyName = data["enemies"][data["toAttack"]].checkStat("name")
+        
+        printAttack([
+            f"{data['attacker']} used {playerAnswer.get()} on {enemyName} for {attackDMG} damage!", 
+            f"{data['attacker']} healed {lifeStealValue} from life steal" if lifeSteal else None, 
+            f"{enemyName} has died!" if data["enemies"][data["toAttack"]].checkStat("health") <= 0 else None
+        ])
+
+        if data["enemies"][data["toAttack"]].checkStat("health") <= 0:
+            data["enemies"][data["toAttack"]].deleteSelf(data["toAttack"])
+
+        currentRegionExtra["battle"]["turn"] += 1
+        loadCampaign()
 
 #-------------------------------------------------Uncatagorised
 
@@ -735,10 +760,14 @@ def loadCampaign(startNew=False): #Starts that campaign
         else:
             raise ValueError("Please select character")
     else:
-        if "talkTo" in currentRegionExtra.keys():
+        if currentRegionExtra.get("talkTo"):
             talkTo(currentRegionExtra["talkTo"])
-        elif "base" in currentRegionExtra.keys():
+        elif currentRegionExtra.get("base"):
             goToBase()
+        elif currentRegionExtra.get("battle"):
+            theContentDestroyer9000(content, deleteAll=True)
+            contentCreator([["button", [{"data": ["Settings", "openSettingsMenu", ""]}]]])
+            turnInnitializer(currentRegionExtra["battle"]["turns"], currentRegionExtra["battle"]["enemies"], currentRegionExtra["battle"]["turn"])
         else:
             backToCampaign()
 
