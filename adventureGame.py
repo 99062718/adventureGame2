@@ -76,7 +76,7 @@ playableCharacters = {
     "campaign": {
         "hero": {
             "name": "hero the 4th",
-            "health": 10,
+            "health": 100,
             "mana": 0,
             "attacks": ["blazing sun"],
             "equippedItems":{
@@ -525,7 +525,8 @@ def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
 
 #-------------------------------------------------Player logic
 
-def chooseEnemy(enemyDict, name): #Shows menu for attacking enemies
+def chooseEnemy(name): #Shows menu for attacking enemies
+    enemyDict = currentRegionExtra["battle"]["enemies"]
     onLineEnemies = [[enemy, enemyData.checkStat("onLine")] for enemy, enemyData in enemyDict.items() if enemyData]
     onLineEnemies.sort(key=lambda a: a[1])
     attackable = [enemy for enemy in onLineEnemies if enemy[1] == onLineEnemies[0][1]]
@@ -542,17 +543,17 @@ def chooseAttack(data): #Shows menu for attacks to use
         data["toAttack"] = playerAnswer.get()
         contentCreator([
             ["text", [{"data": ["What attack will you use?"]}]],
-            ["choice", [{"data": [attack, attack]} for attack in characterDict[data["name"]].checkStat("attacks")]],
+            ["choice", [{"data": [attack, attack]} for attack in characterDict[data["attacker"]].checkStat("attacks")]],
             ["button", [{"data": ["Choose attack", "playerAttack"]}]]
         ], data)
 
 def playerAttack(data): #Logic for attacks
     if playerAnswer.get():
         if customAttacks[playerAnswer.get()].get("mana"):
-            if customAttacks[playerAnswer.get()]["mana"] > characterDict[data["name"]].checkStat("mana"):
+            if customAttacks[playerAnswer.get()]["mana"] > characterDict[data["attacker"]].checkStat("mana"):
                 messagebox.showerror(message="You dont have enough mana to do this attack!")
                 return
-            characterDict[data["name"]].changeStat("subtract", "mana", customAttacks[playerAnswer.get()]["mana"])
+            characterDict[data["attacker"]].changeStat("subtract", "mana", customAttacks[playerAnswer.get()]["mana"])
 
 #-------------------------------------------------Uncatagorised
 
