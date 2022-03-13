@@ -5,7 +5,6 @@ from tkinter.constants import OUTSIDE
 
 #To do:
 #Create room system (Very important!!)
-# - Add battle roomType that can auto detect if its a normal or boss battle
 # - Add extra settings that count for the entire campaign (such as party size limits)
 # - Implement "goTo next" and defaults for choiceEvents
 # - Losing battle should trigger save state if ifLose hasent been specified
@@ -13,7 +12,6 @@ from tkinter.constants import OUTSIDE
 # - Npcs and the player can be moved from line to line during their turn
 # - Npcs and player attacks can be removed and added
 # - Attacks can be learned by either leveling up or buying them from a shop
-# - Characters health and mana should be refilled after battle
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -434,24 +432,38 @@ def backToCampaign(): #Goes back to where campaign left off
 
 #-------------------------------------------------Creation
 
+#The way i wrote this function just does not feel right...
 def battleInitializer(roomContent, choiceEvents): #Innitiates battle
+    global currentRegionExtra
     usedEnemiesDict = {}
     toCreate = {}
     enemies.onTeam = []
+    currentRegionExtra["battle"] = {"bosses": []}
+
+    if roomContent.get("boss"): #Checks for bosses
+        for boss in roomContent["boss"]:
+            currentRegionExtra["battle"]["bosses"].append("boss")
+            for enemy, enemyData in customEnemies[boss].items():
+                if toCreate.get(enemy):
+                    toCreate[enemy]["timesAppear"] += 1
+                else:
+                    toCreate[enemy] = enemyData
+                    toCreate[enemy]["timesAppear"] = 1
+
     if roomContent.get("enemies"): #Checks for enemies given outside template use
         for enemy, enemyData in roomContent["enemies"].items():
             toCreate[enemy] = enemyData
-            toCreate[enemy]["timesAppear"] = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+            toCreate[enemy]["timesAppear"] = calTimesAppear(enemyData)
         
     if roomContent.get("templates"): #Checks for templates used
         for template in roomContent["templates"]:
             for enemy, enemyData in battleTemplates[template].items():
                 if toCreate.get(enemy):
-                    plusAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+                    plusAppear = calTimesAppear(enemyData)
                     toCreate[enemy]["timesAppear"] += plusAppear
                 else:
                     toCreate[enemy] = enemyData
-                    toCreate[enemy]["timesAppear"] = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+                    toCreate[enemy]["timesAppear"] = calTimesAppear(enemyData)
     
     for enemyName, enemyData in toCreate.items(): #Goes through toCreate to make enemies
         if enemyData["timesAppear"] == 1:
@@ -465,6 +477,9 @@ def battleInitializer(roomContent, choiceEvents): #Innitiates battle
 
     turnCalculator(usedEnemiesDict)
 
+def calTimesAppear(enemyData): #Calculates times a certain enemy will appear
+    return 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+
 def createEnemy(enemyName, enemyData): #Creates enemy
     onLine = 0 if "onLine" not in enemyData else enemyData["onLine"] if not isinstance(enemyData["onLine"], list) else random.randint(enemyData["onLine"][0], enemyData["onLine"][1])
     enemyToAdd = customEnemies[enemyName]
@@ -475,7 +490,6 @@ def createEnemy(enemyName, enemyData): #Creates enemy
 #-------------------------------------------------Turn logic
 
 def turnCalculator(enemyDict): #Calculates turns of every person based on speed
-    global currentRegionExtra
     turnList = []
     for character in characters.onTeam:
         turnList.append([character, characterDict[character].checkStat("speed"), "character"])
@@ -487,8 +501,8 @@ def turnCalculator(enemyDict): #Calculates turns of every person based on speed
     turnInnitializer(turnList, enemyDict, 0)
 
 def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn related
-    global currentRegionExtra
-    currentRegionExtra["battle"] = {"enemies": enemyDict, "turn": turnNum, "turns": turnList}
+    global currentRegionExtra, playerAccomplishments
+    currentRegionExtra["battle"] = {"enemies": enemyDict, "turn": turnNum, "turns": turnList, "bosses": currentRegionExtra["battle"]["bosses"]}
 
     aliveCharacters = [character[0] for character in turnList if character[2] == "character" and characterDict[character[0]].checkStat("health") > 0]
     aliveEnemies = [enemy[0] for enemy in turnList if enemy[2] == "enemy" and enemyDict[enemy[0]].checkStat("health") > 0]
@@ -499,6 +513,12 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
             return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifLose")
     elif not aliveEnemies: #Should trigger ifWin
         returnAllToMax()
+
+        if currentRegionExtra["battle"].get("bosses"): #Adds bosses to playerAccomplishments if any defeated
+            for boss in currentRegionExtra["battle"]["bosses"]:
+                if boss not in playerAccomplishments["defeatedBosses"]:
+                    playerAccomplishments["defeatedBosses"].append(boss)
+
         return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifWin")
 
     if turnNum >= len(turnList):
@@ -612,7 +632,6 @@ def returnAllToMax():
     for name, character in characterDict.items():
         character.changeStat("set", "health", character.checkStat("maxHealth"))
         character.changeStat("set", "mana", character.checkStat("maxMana"))
-        print(characterDict[name].checkStat("health"))
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
