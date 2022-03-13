@@ -495,8 +495,10 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
 
     if not aliveCharacters: #Should trigger ifLose
         if campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"].get("ifLose"):
+            returnAllToMax()
             return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifLose")
     elif not aliveEnemies: #Should trigger ifWin
+        returnAllToMax()
         return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifWin")
 
     if turnNum >= len(turnList):
@@ -605,6 +607,12 @@ def printAttack(toPrint): #Prints events happening during attack
     for text in toPrint:
         if text:
             messagebox.showinfo(message=text)
+
+def returnAllToMax():
+    for name, character in characterDict.items():
+        character.changeStat("set", "health", character.checkStat("maxHealth"))
+        character.changeStat("set", "mana", character.checkStat("maxMana"))
+        print(characterDict[name].checkStat("health"))
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 
