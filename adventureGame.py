@@ -63,6 +63,10 @@ customItems = {
 customAttacks = {
     "blazing sun": {
         "damage": 25
+    },
+    "ice blast": {
+        "damage": 40,
+        "mana": 30
     }
 }
 
@@ -99,6 +103,16 @@ customEnemies = {
         "equippedItems":{
             "left": "truly humongous knife"
         }
+    },
+    "henk": {
+        "name": "henk",
+        "health": 55,
+        "mana": 200,
+        "speed": 1,
+        "attacks": ["ice blast", "blazing sun"],
+        "equippedItems": {
+            "left": "Henk's dagger"
+        }
     }
 }
 
@@ -131,19 +145,19 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
             {
                 "roomType": "battle",
                 "content": {
-                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}},
-                    "templates": ["the deadly daves"]
+                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
                 },
                 "choiceEvents": {
-                    "ifWin": ["goTo", "forest", 0]
+                    "ifWin": ["goTo", "forest", 2]
                 }
             },
             {
                 "roomType": "battle",
                 "content": {
-                    "boss": ["henk"],
+                    "boss": {"henk": {"onLine": 2}},
                     "enemies": {"evil dave": {"timesAppear": 2}}
-                }
+                },
+                "choiceEvents": {}
             }
         ]
     },
@@ -441,14 +455,13 @@ def battleInitializer(roomContent, choiceEvents): #Innitiates battle
     currentRegionExtra["battle"] = {"bosses": []}
 
     if roomContent.get("boss"): #Checks for bosses
-        for boss in roomContent["boss"]:
+        for boss, bossData in roomContent["boss"].items():
             currentRegionExtra["battle"]["bosses"].append("boss")
-            for enemy, enemyData in customEnemies[boss].items():
-                if toCreate.get(enemy):
-                    toCreate[enemy]["timesAppear"] += 1
-                else:
-                    toCreate[enemy] = enemyData
-                    toCreate[enemy]["timesAppear"] = 1
+            if toCreate.get(boss):
+                toCreate[boss]["timesAppear"] += 1
+            else:
+                toCreate[boss] = bossData
+                toCreate[boss]["timesAppear"] = 1
 
     if roomContent.get("enemies"): #Checks for enemies given outside template use
         for enemy, enemyData in roomContent["enemies"].items():
@@ -546,7 +559,7 @@ def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
                 enemyDict[attacker].changeStat("add", "currentAttack", 1)
                 continue
             else:
-                enemyDict[attacker.changeStat]("subtract", "mana", customAttacks[attack]["mana"])
+                enemyDict[attacker].changeStat("subtract", "mana", customAttacks[attack]["mana"])
         break
 
     attackDMG = round(customAttacks[attack]["damage"] * enemyDict[attacker].checkStat("attackMulti") / characterDict[toAttack].checkStat("defense"))
@@ -555,6 +568,7 @@ def enemyAttack(attacker): #Enemy attack oOoooOOooOooOOOO
 
     characterDict[toAttack].changeStat("subtract", "health", attackDMG)
     enemyDict[attacker].changeStat("add", "health", lifeStealValue)
+    enemyDict[attacker].changeStat("add", "currentAttack", 1)
 
     attackerName = enemyDict[attacker].checkStat("name")
 
