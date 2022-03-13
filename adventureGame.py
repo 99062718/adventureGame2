@@ -36,7 +36,6 @@ from tkinter.constants import OUTSIDE
 # - Events that trigger when crit happens (Gain health when crit, gain money on crit, ect)
 # - Items that are better against certain types of monsters
 #Battle
-# - A template system so that frequently used enemy combos dont have to constantly be written out in its entirety
 # - Some kind of AOI attack that hits all enemies on a line (could also be crosslined)
 #Bosses
 # - Bosses might be able to drop special items that can only be obtained from them
@@ -105,6 +104,13 @@ customEnemies = {
     }
 }
 
+battleTemplates = {
+    "the deadly daves": {
+        "evil dave": {"timesAppear": [1, 5], "onLine": 2},
+        "even more evil dave": {"timesAppear": 1}
+    }
+}
+
 campaigns = { #This list is mostly used for me to visualize what creating rooms and such might look like
     "campaign": {
         "forest":[
@@ -127,7 +133,8 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
             {
                 "roomType": "battle",
                 "content": {
-                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
+                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}},
+                    "templates": ["the deadly daves"]
                 },
                 "choiceEvents": {
                     "ifWin": ["goTo", "forest", 0]
@@ -137,8 +144,7 @@ campaigns = { #This list is mostly used for me to visualize what creating rooms 
                 "roomType": "battle",
                 "content": {
                     "boss": ["henk"],
-                    "enemies": {"evil dave": {"timesAppear": 2}},
-                    "text": ["bla bla evil plot bla bla"]
+                    "enemies": {"evil dave": {"timesAppear": 2}}
                 }
             }
         ]
@@ -342,7 +348,7 @@ def roomTypeCheck(currentRoom): #Checks roomType of room
     if currentRoom["roomType"] == "normal":
         contentCreator(currentRoom["content"], currentRoom["choiceEvents"])
     elif currentRoom["roomType"] == "battle":
-        battleInnitializer(currentRoom["content"], currentRoom["choiceEvents"])
+        battleInitializer(currentRoom["content"], currentRoom["choiceEvents"])
     else:
         raise ValueError(f"{currentRoom['roomType']} is not a valid roomType")
 
@@ -428,16 +434,31 @@ def backToCampaign(): #Goes back to where campaign left off
 
 #-------------------------------------------------Creation
 
-def battleInnitializer(roomContent, choiceEvents): #Innitiates battle
+def battleInitializer(roomContent, choiceEvents): #Innitiates battle
     usedEnemiesDict = {}
+    toCreate = {}
     enemies.onTeam = []
-    for enemyName, enemyData in roomContent["enemies"].items():
-        timesAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
-        if timesAppear == 1:
+    if roomContent.get("enemies"): #Checks for enemies given outside template use
+        for enemy, enemyData in roomContent["enemies"].items():
+            toCreate[enemy] = enemyData
+            toCreate[enemy]["timesAppear"] = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+        
+    if roomContent.get("templates"): #Checks for templates used
+        for template in roomContent["templates"]:
+            for enemy, enemyData in battleTemplates[template].items():
+                if toCreate.get(enemy):
+                    plusAppear = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+                    toCreate[enemy]["timesAppear"] += plusAppear
+                else:
+                    toCreate[enemy] = enemyData
+                    toCreate[enemy]["timesAppear"] = 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
+    
+    for enemyName, enemyData in toCreate.items(): #Goes through toCreate to make enemies
+        if enemyData["timesAppear"] == 1:
             usedEnemiesDict[enemyName] = createEnemy(enemyName, enemyData)
             enemies.changeTeam(enemyName)
         else:
-            for timesAppeared in range(timesAppear):
+            for timesAppeared in range(enemyData["timesAppear"]):
                 newName = f"{enemyName}{timesAppeared + 1}"
                 usedEnemiesDict[newName] = createEnemy(enemyName, enemyData)
                 enemies.changeTeam(newName)
