@@ -66,9 +66,7 @@ playerAccomplishments = { #Add all player accomplishments (like beating a boss) 
 currentRegionExtra = {} #This is for keeping track of the player being in battle, base, or talking to an npc
 content = [[], []]
 
-#--------------------------------------------------------------------------------Characters and enemies
-
-#-------------------------------------------------Characters
+#--------------------------------------------------------------------------------Characters
 
 def addToCharacterDict(toAdd): #Adds newly recruited people to character class and characterDict
     global characterDict
@@ -396,84 +394,6 @@ def returnAllToMax():
     for name, character in characterDict.items():
         character.changeStat("set", "health", character.checkStat("maxHealth"))
         character.changeStat("set", "mana", character.checkStat("maxMana"))
-
-#--------------------------------------------------------------------------------Dialogue system stuff
-
-class npc: #Npc which can be recruited, talked to or bought things from
-    def __init__(self, characterInfo):
-        self.name = characterInfo["name"]
-        self.currentDialogue = characterInfo["currentDialogue"]
-        self.possibleDialogue = characterInfo["possibleDialogue"]
-        self.emotions = {
-            "anger": 0,
-            "happiness": 0,
-            "sadness": 0
-        } if not characterInfo["emotions"] else characterInfo["emotions"]
-        self.recruitStats = characterInfo["recruitStats"] if "recruitStats" in characterInfo["recruitStats"] else None
-        self.recruitCriteria = characterInfo["recruitCriteria"] if "recruitCriteria" in characterInfo["recruitCriteria"] else None
-
-    @staticmethod
-    def hierarchyCheck(dialogueList): #Checks what the highest hierarchy in a dialogue list is
-        for tier, text in enumerate(dialogueList):
-            if len(text) != 0:
-                return tier
-        raise ValueError("No dialogue found")
-
-    def checkForNewDialogue(self): #Checks for new dialogue to put into currentDialogue (not finished yet)
-        for hierarchyTier, values in enumerate(self.possibleDialogue):
-            for dialogue in values[:]:
-                passedCheck = False
-                doBreak = False
-
-                if dialogue[0].get("subText"):
-                    pass
-                else:
-                    if dialogue[0].get("relation"): #Checks emotion npc has for player
-                        for emotion, value in dialogue[0]["relations"].items():
-                            if self.emotions.get(emotion):
-                                if value >= self.emotions[emotion]:
-                                    passedCheck = True
-                                else:
-                                    passedCheck = False
-                                    doBreak = True
-                                    break
-                            else:
-                                raise ValueError(f"{emotion} not in emotions")
-
-                    if doBreak:
-                        continue
-
-                    if dialogue[0].get("world"): #Checks achievements player has accomplished
-                        if checkIfHasAchievement(dialogue[0]["world"], needsAll=True):
-                            passedCheck = True
-
-                if passedCheck:
-                    self.possibleDialogue[hierarchyTier].remove(dialogue)
-                    self.addDialogue(hierarchyTier, dialogue)
-
-    def addDialogue(self, tier, dialogue): #Adds dialogue to currentDialogue
-        self.currentDialogue[tier].append([dialogue[1], dialogue[2]])
-
-dialogue = { # concept dialogue list
-    "currentDialogue":[
-        [
-            [["dslkgfsdlkgjslkg"], ["open up path(s)"]]
-        ],
-        [],
-        [],
-        [],
-        []
-    ],
-    "possibleDialogue":[
-        [
-            [{"relation":{}, "world":{}}, ["dslkgfsdlkgjslkg"], ["open up path(s)"]]
-        ],
-        [],
-        [],
-        [],
-        []
-    ]
-}
 
 #--------------------------------------------------------------------------------Settings
 
