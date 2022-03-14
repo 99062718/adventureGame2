@@ -1,6 +1,7 @@
 import tkinter
 import random
 import json
+from gameFunctions.classFunctions import *
 from tkinter import StringVar, ttk, messagebox
 from tkinter.constants import OUTSIDE
 
@@ -12,15 +13,20 @@ from tkinter.constants import OUTSIDE
 #Create battle system (the line layer system) (Important)
 # - Npcs and the player can be moved from line to line during their turn
 # - Npcs and player attacks can be removed and added
-# - Attacks can be learned by either leveling up or buying them from a shop
+#Level stuff
+# - Stats scale by given percentage
+# - Scale percentage can be given per stat
+# - Scale can be given per character or per campaign (prioritises character over campaign)
+# - Attacks can be learned by leveling up
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
+# - Attacks can be learned by buying them from a shop
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
 # - Gold and xp obtained from killing enemies should be a mix between random and set
-#Create settings menu with current zone, health, cheatcodes, ect (Parity)
+#Settings menu
 # - Add ability to change line position per team member outside battle
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
@@ -36,10 +42,17 @@ from tkinter.constants import OUTSIDE
 # - Items that are better against certain types of monsters
 #Battle
 # - Some kind of AOI attack that hits all enemies on a line (could also be crosslined)
+# - Attack that hits a set of random enemies (for the gamblers among us)
 #Bosses
 # - Bosses might be able to drop special items that can only be obtained from them
 #Rooms
 # - Dungeons (this is to fix balancing for battles and xp as it is extremely difficult as is)
+#Cheat codes
+# - UNLIMITED POWAH
+# - Max health
+# - Max mana
+# - Gain the most powerful weapon in all of existance
+# - Die
 
 mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
@@ -55,127 +68,7 @@ content = [[], []]
 
 #--------------------------------------------------------------------------------Characters and enemies
 
-class person: #Creates class from which characters and enemies inherit
-    bodyparts = ["left", "right", "head", "chest", "legs", "feet", "amulet"]
-
-    def __init__(self, characterData, loadFromSave=False):
-        self._characterStats = {
-            "name": characterData["name"],
-            "health": characterData["health"],
-            "maxHealth": characterData["maxHealth" if characterData.get("maxHealth") else "health"],
-            "attacks": characterData["attacks"] if characterData.get("attacks") else [],
-            "attackMulti": characterData["attackMulti"] if characterData.get("attackMulti") else 1,
-            "speed": characterData["speed"] if characterData.get("speed") else 1,
-            "defense": characterData["defense"] if characterData.get("defense") else 1,
-            "mana": characterData["mana"],
-            "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
-            "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
-            "equippedItems": {bodypart: characterData["equippedItems"].get(bodypart) for bodypart in self.bodyparts},
-            "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
-            "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else []
-        }
-
-        if not loadFromSave:
-            for bodyPart, item in self._characterStats["equippedItems"].items():
-                if item:
-                    self.changeItemModifyer(item)
-
-
-    def changeStat(self, changeHow, statToChange, value): #Can change any stat in this class (set value, add to, subtract from, append to list or dict or remove from list or dict)
-        if statToChange in self._characterStats:
-            if changeHow == "set":
-                self._characterStats[statToChange] = value
-            elif changeHow == "add":
-                self._characterStats[statToChange] += value
-            elif changeHow == "subtract":
-                self._characterStats[statToChange] -= value
-            elif changeHow == "append":
-                if isinstance(value, dict):
-                    self._characterStats[statToChange][list(value.keys())[0]] = value
-                else:
-                    self._characterStats[statToChange].append(value)
-            elif changeHow == "remove":
-                self._characterStats[statToChange].remove(value)
-            else:
-                raise ValueError(f"{changeHow} is not a valid way to change stat")
-        else:
-            raise ValueError(f"{statToChange} is not an existing stat")
-
-        self.adjustStat(statToChange)
-        
-    def adjustStat(self, statToChange): #Adjusts stat when a certain value has been reached
-        if statToChange in ["mana", "maxMana", "health", "maxHealth"]:
-            if self.checkStat("health") > self.checkStat("maxHealth"):
-                self.changeStat("set", "health", self.checkStat("maxHealth"))
-            
-            if self.checkStat("mana") > self.checkStat("maxMana"):
-                self.changeStat("set", "mana", self.checkStat("maxMana"))
-        
-        if self._characterStats.get("currentAttack") and self._characterStats["currentAttack"] == len(self.checkStat("attacks")):
-            self.changeStat("set", "currentAttack", 0)
-
-    def checkStat(self, statToCheck): #Checks value of given stat
-        if statToCheck in self._characterStats:
-            return self._characterStats[statToCheck]
-        else:
-            raise ValueError(f"{statToCheck} is not an existing stat")
-
-    def setItem(self, bodyPart, item): #Sets item of given bodypart
-        pastItem = self.checkItem(bodyPart)
-        if pastItem:
-            self.changeItemModifyer(pastItem, True)
-            characters.teamEquiped.remove(pastItem)
-            characters.inventory.append(pastItem)
-
-        self._characterStats["equippedItems"][bodyPart] = item
-
-        if item:
-            self.changeItemModifyer(item)
-            if self.checkStat("name") in characterDict.keys():
-                characters.teamEquiped.append(item)
-                characters.inventory.remove(item)
-
-    def checkItem(self, bodyPart):
-        return self._characterStats["equippedItems"][bodyPart]
-
-    def changeItemModifyer(self, item, remove=False): #Adds or removes item modifyer from person stats
-        for modifier, value in customItems[item].items():
-            match modifier: #Gives an error in my IDE. Works perfectly though...
-                case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "lifeSteal" | "defense"):
-                    self.changeStat("subtract" if remove else "add", modifier, value)
-                case "dmgOverTime":
-                    for overTimeModifier in value:
-                        self.changeStat("remove" if remove else "append", "dmgOverTime", overTimeModifier)
-
-    @classmethod
-    def changeTeam(cls, obj, addOrRemove="add"): #Adds/removes person to/from class onTeam
-        if obj:
-            if addOrRemove == "add":
-                cls.onTeam.append(obj)
-            else:
-                cls.onTeam.remove(obj)
-            return True
-        else:
-            return False
-
 #-------------------------------------------------Characters
-
-class characters(person): #Used for characters that have been recruited or are present within the team
-    onTeam = []
-    inventory = []
-    teamEquiped = []
-
-    def __init__(self, characterData):
-        super().__init__(characterData)
-        for bodyPart, value in self._characterStats["equippedItems"].items(): #Adds all currently equipped items to inventory
-            if value:
-                characters.teamEquiped.append(value)
-
-    @classmethod
-    def checkHasItem(cls, item, notHas): #Should check if character has an item or not (not finished)
-        if item in cls.inventory and notHas == "has" or item not in cls.inventory and notHas == "not" or item in cls.teamEquiped and notHas == "has" or item not in cls.teamEquiped and notHas == "not":
-            return True
-        return False
 
 def addToCharacterDict(toAdd): #Adds newly recruited people to character class and characterDict
     global characterDict
@@ -222,19 +115,6 @@ def removeFromTeam(): #Removes character from team and returns to base if succes
      ifSuccesful = characters.changeTeam(playerAnswer.get(), "remove")
      if ifSuccesful:
          goToBase()
-
-#-------------------------------------------------Enemies
-
-class enemies(person): #Used for enemies currently in battle with
-    onTeam = []
-
-    def __init__(self, characterData):
-        super().__init__(characterData)
-        self._characterStats["currentAttack"] = characterData["currentAttack"] if characterData.get("currentAttack") else 0
-
-    def deleteSelf(self, name):
-        enemies.onTeam.remove(name)
-        del self
 
 #--------------------------------------------------------------------------------Room generation
 
@@ -314,18 +194,6 @@ def backToCampaign(): #Goes back to where campaign left off
 
 #--------------------------------------------------------------------------------Battle
 
-{ #Just here for me to remember what i need to implement into battle
-                "roomType": "battle",
-                "content": {
-                    "boss": ["henk"],
-                    "enemies": {"evil dave": {"timesAppear": 2}}
-                },
-                "choiceEvents": {
-                    "ifWin": ["goTo", "next"],
-                    "ifLose": ["goTo", "prison", 2] #Not entering this should just result into a load of save when battle is lost
-                }
-            }
-
 #-------------------------------------------------Creation
 
 #The way i wrote this function just does not feel right...
@@ -348,17 +216,17 @@ def battleInitializer(roomContent, choiceEvents): #Innitiates battle
     if roomContent.get("enemies"): #Checks for enemies given outside template use
         for enemy, enemyData in roomContent["enemies"].items():
             toCreate[enemy] = enemyData
-            toCreate[enemy]["timesAppear"] = calTimesAppear(enemyData)
+            toCreate[enemy]["timesAppear"] = calcTimesAppear(enemyData)
         
     if roomContent.get("templates"): #Checks for templates used
         for template in roomContent["templates"]:
             for enemy, enemyData in battleTemplates[template].items():
                 if toCreate.get(enemy):
-                    plusAppear = calTimesAppear(enemyData)
+                    plusAppear = calcTimesAppear(enemyData)
                     toCreate[enemy]["timesAppear"] += plusAppear
                 else:
                     toCreate[enemy] = enemyData
-                    toCreate[enemy]["timesAppear"] = calTimesAppear(enemyData)
+                    toCreate[enemy]["timesAppear"] = calcTimesAppear(enemyData)
     
     for enemyName, enemyData in toCreate.items(): #Goes through toCreate to make enemies
         if enemyData["timesAppear"] == 1:
@@ -372,7 +240,7 @@ def battleInitializer(roomContent, choiceEvents): #Innitiates battle
 
     turnCalculator(usedEnemiesDict)
 
-def calTimesAppear(enemyData): #Calculates times a certain enemy will appear
+def calcTimesAppear(enemyData): #Calculates times a certain enemy will appear
     return 1 if "timesAppear" not in enemyData else enemyData["timesAppear"] if not isinstance(enemyData["timesAppear"], list) else random.randint(enemyData["timesAppear"][0], enemyData["timesAppear"][1])
 
 def createEnemy(enemyName, enemyData): #Creates enemy
