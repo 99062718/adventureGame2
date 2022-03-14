@@ -612,8 +612,11 @@ dialogue = { # concept dialogue list
 def openSettingsMenu(): #Opens settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([
-        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "currentRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLine"])]]
+        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "printRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLine"])]]
     ])
+
+def printRegion():
+    messagebox.showinfo(message=f"Your current region is: {currentRegion[0]}")
 
 #-------------------------------------------------Inventory
 
@@ -742,6 +745,7 @@ functionList = {
     "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
+    "printRegion": printRegion,
     "intoInventory": intoInventory,
     "showInventoryItemList": showInventoryItemList,
     "showTeamList": showTeamList,
