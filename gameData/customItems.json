@@ -1,0 +1,14 @@
+{
+    "Henk's dagger": {
+        "speed": 2,
+        "attackMulti": 0.25,
+        "dmgOverTime": ["wither"],
+        "bodyparts": ["left", "right"]
+    },
+    "truly humongous knife": {
+        "speed": 5,
+        "lifeSteal": 20,
+        "dmgOverTime": ["fire", "poison"],
+        "bodyparts": ["left", "right"]
+    }
+}

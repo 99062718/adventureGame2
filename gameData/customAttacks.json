@@ -1,0 +1,9 @@
+{
+    "blazing sun": {
+        "damage": 25
+    },
+    "ice blast": {
+        "damage": 40,
+        "mana": 30
+    }
+}

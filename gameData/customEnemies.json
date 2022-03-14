@@ -1,0 +1,31 @@
+{
+    "evil dave": {
+        "name": "evil dave",
+        "health": 10,
+        "mana": 0,
+        "attacks": ["blazing sun"],
+        "equippedItems":{
+            "left": "truly humongous knife"
+        }
+    },
+    "even more evil dave": {
+        "name": "even more evil dave",
+        "health": 25,
+        "mana": 200,
+        "speed": 5,
+        "attacks": ["blazing sun"],
+        "equippedItems":{
+            "left": "truly humongous knife"
+        }
+    },
+    "henk": {
+        "name": "henk",
+        "health": 55,
+        "mana": 200,
+        "speed": 1,
+        "attacks": ["ice blast", "blazing sun"],
+        "equippedItems": {
+            "left": "Henk's dagger"
+        }
+    }
+}

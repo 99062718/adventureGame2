@@ -1,0 +1,40 @@
+{
+    "campaign": {
+        "forest":[
+            {
+                "roomType": "normal",
+                "content": [
+                    ["choice", [{"data": ["Talk to dave", "dave"],
+                        "blockIf": {
+                            "hasItem": ["big knife", ["truly humongous knife"]],
+                            "OnTeam": [["dave"]],
+                            "defeatedBoss": ["john", ["big man the almighty"]]
+                        }},{"data": ["go to base", "base"]},{"data": ["exit", "exit"]}]],
+                        ["button", [{"data": ["Choose", "nextRoom"]}]]],
+                "choiceEvents": {
+                    "dave": ["talkTo", "dave"],
+                    "exit": ["goTo", "forest", 1],
+                    "base": ["base"]
+                }
+            },
+            {
+                "roomType": "battle",
+                "content": {
+                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
+                },
+                "choiceEvents": {
+                    "ifWin": ["goTo", "forest", 2]
+                }
+            },
+            {
+                "roomType": "battle",
+                "content": {
+                    "boss": {"henk": {"onLine": 2}},
+                    "enemies": {"evil dave": {"timesAppear": 2}}
+                },
+                "choiceEvents": {}
+            }
+        ]
+    },
+    "2": 0
+}

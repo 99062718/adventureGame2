@@ -1,0 +1,6 @@
+{
+    "the deadly daves": {
+        "evil dave": {"timesAppear": [1, 5], "onLine": 2},
+        "even more evil dave": {"timesAppear": 1}
+    }
+}

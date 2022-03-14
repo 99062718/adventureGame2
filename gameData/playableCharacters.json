@@ -1,0 +1,13 @@
+{
+    "campaign": {
+        "hero": {
+            "name": "hero the 4th",
+            "health": 1000,
+            "mana": 0,
+            "attacks": ["blazing sun"],
+            "equippedItems":{
+                "left": "truly humongous knife"
+            }
+        }
+    }
+}

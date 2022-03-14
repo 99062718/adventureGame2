@@ -1,5 +1,6 @@
 import tkinter
 import random
+import json
 from tkinter import StringVar, ttk, messagebox
 from tkinter.constants import OUTSIDE
 
@@ -44,125 +45,6 @@ mainWindow = tkinter.Tk()
 mainWindow.configure(padx=50, pady=30)
 
 #--------------------------------------------------------------------------------Dictionaries
-
-customItems = {
-    "Henk's dagger": {
-        "speed": 2,
-        "attackMulti": 0.25,
-        "dmgOverTime": ["wither"],
-        "bodyparts": ["left", "right"]
-    },
-    "truly humongous knife": {
-        "speed": 5,
-        "lifeSteal": 20,
-        "dmgOverTime": ["fire", "poison"],
-        "bodyparts": ["left", "right"]
-    }
-}
-
-customAttacks = {
-    "blazing sun": {
-        "damage": 25
-    },
-    "ice blast": {
-        "damage": 40,
-        "mana": 30
-    }
-}
-
-playableCharacters = {
-    "campaign": {
-        "hero": {
-            "name": "hero the 4th",
-            "health": 1000,
-            "mana": 0,
-            "attacks": ["blazing sun"],
-            "equippedItems":{
-                "left": "truly humongous knife"
-            }
-        }
-    }
-}
-
-customEnemies = {
-    "evil dave": {
-        "name": "evil dave",
-        "health": 10,
-        "mana": 0,
-        "attacks": ["blazing sun"],
-        "equippedItems":{
-            "left": "truly humongous knife"
-        }
-    },
-    "even more evil dave": {
-        "name": "even more evil dave",
-        "health": 25,
-        "mana": 200,
-        "speed": 5,
-        "attacks": ["blazing sun"],
-        "equippedItems":{
-            "left": "truly humongous knife"
-        }
-    },
-    "henk": {
-        "name": "henk",
-        "health": 55,
-        "mana": 200,
-        "speed": 1,
-        "attacks": ["ice blast", "blazing sun"],
-        "equippedItems": {
-            "left": "Henk's dagger"
-        }
-    }
-}
-
-battleTemplates = {
-    "the deadly daves": {
-        "evil dave": {"timesAppear": [1, 5], "onLine": 2},
-        "even more evil dave": {"timesAppear": 1}
-    }
-}
-
-campaigns = { #This list is mostly used for me to visualize what creating rooms and such might look like
-    "campaign": {
-        "forest":[
-            {
-                "roomType": "normal",
-                "content": [
-                    ["choice", [{"data": ["Talk to dave", "dave"],
-                        "blockIf": {
-                            "hasItem": ["big knife", ["truly humongous knife"]],
-                            "OnTeam": [["dave"]],
-                            "defeatedBoss": ["john", ["big man the almighty"]]
-                        }},{"data": ["go to base", "base"]},{"data": ["exit", "exit"]}]],
-                        ["button", [{"data": ["Choose", "nextRoom"]}]]],
-                "choiceEvents": {
-                    "dave": ["talkTo", "dave"],
-                    "exit": ["goTo", "forest", 1],
-                    "base": ["base"]
-                }
-            },
-            {
-                "roomType": "battle",
-                "content": {
-                    "enemies": {"evil dave": {"timesAppear": [1, 5], "onLine": 2}, "even more evil dave": {"timesAppear": 1}}
-                },
-                "choiceEvents": {
-                    "ifWin": ["goTo", "forest", 2]
-                }
-            },
-            {
-                "roomType": "battle",
-                "content": {
-                    "boss": {"henk": {"onLine": 2}},
-                    "enemies": {"evil dave": {"timesAppear": 2}}
-                },
-                "choiceEvents": {}
-            }
-        ]
-    },
-    "2": 0
-}
 
 characterDict = {}
 playerAccomplishments = { #Add all player accomplishments (like beating a boss) to this
@@ -831,6 +713,23 @@ def loadCampaign(startNew=False): #Starts that campaign
         else:
             backToCampaign()
 
+#--------------------------------------------------------------------------------Json file reading
+
+def checkGameData(): #Reads campaigns, playableCharacters, battleTemplates, customItems, customEnemies and customAttacks .json files
+    global campaigns, battleTemplates, customAttacks, customEnemies, customItems, playableCharacters
+    files = ["campaigns", "battleTemplates", "customAttacks", "customEnemies", "customItems", "playableCharacters"]
+    data = {}
+    for currentFile in files:
+        with open(f"gameData/{currentFile}.json", "r") as openedFile:
+            data[currentFile] = json.load(openedFile)
+    
+    campaigns = data["campaigns"]
+    battleTemplates = data["battleTemplates"]
+    customAttacks = data["customAttacks"]
+    customEnemies = data["customEnemies"]
+    customItems = data["customItems"]
+    playableCharacters = data["playableCharacters"]
+
 #--------------------------------------------------------------------------------Automatic function execution
 
 def funcExecute(functionToUse, extraData=None): #executes whatever function we put into it. useful for dynamically creating buttons
@@ -903,6 +802,7 @@ def checkIfHasAchievement(toCheck, needsAll=False): #Checks if the player has ac
 
 #--------------------------------------------------------------------------------Start of game
 
+checkGameData()
 mainMenu()
 
 mainWindow.mainloop()
