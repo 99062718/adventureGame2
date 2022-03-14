@@ -89,7 +89,7 @@ class person: #Creates class from which characters and enemies inherit
 
         if item:
             self.changeItemModifyer(item)
-            if self.checkStat("name") in characterDict.keys():
+            if self.checkStat("team") == "character":
                 characters.teamEquiped.append(item)
                 characters.inventory.remove(item)
 
@@ -125,6 +125,7 @@ class characters(person): #Used for characters that have been recruited or are p
 
     def __init__(self, characterData):
         super().__init__(characterData)
+        self._characterStats["team"] = "character"
         self._characterStats["level"] = characterData["level"] if characterData.get("level") else 1
         self._characterStats["xp"] = characterData["xp"] if characterData.get("xp") else 0
         self._characterStats["xpForNextLevel"] = characterData["xpForNextLevel"] if characterData.get("xpForNextLevel") else 10
@@ -146,6 +147,7 @@ class enemies(person): #Used for enemies currently in battle with
 
     def __init__(self, characterData):
         super().__init__(characterData)
+        self._characterStats["team"] = "enemy"
         self._characterStats["currentAttack"] = characterData["currentAttack"] if characterData.get("currentAttack") else 0
 
     def deleteSelf(self, name):
