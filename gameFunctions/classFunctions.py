@@ -116,6 +116,9 @@ class person: #Creates class from which characters and enemies inherit
         else:
             return False
 
+    def giveAllStats(self): #Creates string with all stats of person
+        return "".join(f"{stat} - {value}\n" for stat, value in self._characterStats.items())
+
 #-------------------------------------------------Characters
 
 class characters(person): #Used for characters that have been recruited or are present within the team

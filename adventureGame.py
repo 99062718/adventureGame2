@@ -188,7 +188,7 @@ def contentCreator(roomContent, extraData=None): #With the arival of lord conten
                     raise ValueError(f"{currentContent[0]} is not a valid widget")
             
             if len(currentText["data"]) < 3:
-                currentWidget.grid(column=0, row=num)
+                currentWidget.grid(column=0, row=num, pady=5)
                 num += 1
             else:
                 currentWidget.place(bordermode=OUTSIDE, anchor="nw")
@@ -413,7 +413,7 @@ def returnAllToMax():
 def openSettingsMenu(): #Opens settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([
-        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "printRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLineMenu"])]]
+        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "printRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLineMenu"], ["Check character stats", "checkCharacterMenu"])]]
     ])
 
 def showTeamList(data): #Shows list of characters that can be chosen
@@ -492,6 +492,17 @@ def insertLine(data): #Player must enter line they want character on here
 def putOnLine(character): #Puts chosen character on chosen line
     if playerAnswer.get():
         characterDict[character].changeStat("set", "onLine", playerAnswer.get())
+        openSettingsMenu()
+
+#-------------------------------------------------Character stats
+
+def checkCharacterMenu():
+    showTeamList({"menu": "showStats", "forceShow": True})
+
+def showStats(data):
+    if playerAnswer.get():
+        info = characterDict[playerAnswer.get()].giveAllStats()
+        messagebox.showinfo(message=info)
         openSettingsMenu()
 
 #--------------------------------------------------------------------------------Main menu stuff
@@ -574,6 +585,8 @@ functionList = {
     "changePartyLineMenu": changePartyLineMenu,
     "insertLine": insertLine,
     "putOnLine": putOnLine,
+    "checkCharacterMenu": checkCharacterMenu,
+    "showStats": showStats,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
