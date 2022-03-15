@@ -131,7 +131,7 @@ class characters(person): #Used for characters that have been recruited or are p
         super().__init__(characterData)
         self._characterStats["team"] = "character"
         self._characterStats["level"] = characterData["level"] if characterData.get("level") else 1
-        self._characterStats["statScaling"] = characterData.get("statScaling")
+        self._characterStats["statScaling"] = characterData["statScaling"] if characterData.get("statScaling") else {}
         self._characterStats["xp"] = characterData["xp"] if characterData.get("xp") else 0
         self._characterStats["xpForNextLevel"] = characterData["xpForNextLevel"] if characterData.get("xpForNextLevel") else 10
         self._characterStats["toLearn"] = characterData.get("toLearn")
@@ -146,14 +146,28 @@ class characters(person): #Used for characters that have been recruited or are p
         return False
 
     def checkForLevelUp(self): #Level up functionality
+        changebleStats = ["maxHealth", "maxMana", "attackMulti", "defense", "speed"]
+
         if self.checkStat("xp") >= self.checkStat("xpForNextLevel"):
             self.changeStat("set", "xp", self.checkStat("xp") % self.checkStat("xpForNextLevel"))
             self.changeStat("add", "level", 1)
+            changedMessage = f"{self.checkStat('name')} leveled up!\nlevel: {self.checkStat('level')}\n"
+
+            for toChange in changebleStats:
+                oldStat = self.checkStat(toChange)
+                changePercentage = self.checkStat(statScaling)[toChange] if self.checkStat(statScaling).get(toChange) else globalSettings["statScaling"][toChange]
+                self.changeStat("set", toChange, round(oldStat * changePercentage))
+                changedMessage += f"{toChange}: {oldStat} -> {self.checkStat(toChange)}\n"
+
+            messagebox.showinfo(message=changedMessage)
 
             if self.checkStat("toLearn"):
                 if str(self.checkStat("level")) in self.checkStat("toLearn"):
+                    newlyLearned = []
                     for newAttack in self.checkStat("toLearn")[self.checkStat("level")]:
                         self.changeStat("append", "attacks", newAttack)
+                        newlyLearned.append(newAttack)
+                    messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlylearned))
 
 #-------------------------------------------------Enemies
 

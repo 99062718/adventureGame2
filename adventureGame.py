@@ -9,13 +9,12 @@ from tkinter.constants import OUTSIDE
 # - Implement "goTo next" and defaults for choiceEvents
 # - Losing battle should trigger save state if ifLose hasent been specified
 #Create battle system (the line layer system) (Important)
-# - Npcs and the player can be moved from line to line during their turn
 # - Npcs and player attacks can be removed and added
+# - Make enemies drop xp and gold once battle has been won
+# - Base xp off of enemy healh
+# - Base gold off potential damage enemy can do
 #Level stuff
-# - Stats scale by given percentage
-# - Scale percentage can be given per stat
-# - Scale can be given per character or per campaign (prioritises character over campaign)
-# - Add messages for leveling up and gaining new attacks
+# - Scale can be given per character or per campaign
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -24,8 +23,6 @@ from tkinter.constants import OUTSIDE
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
 #Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
 # - Gold and xp obtained from killing enemies should be a mix between random and set
-#Settings menu
-# - Add ability to change line position per team member outside battle
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
 # - Battles are going to be a bit of a hard one. Save all enemies to currentRegionExtra and save that to json
