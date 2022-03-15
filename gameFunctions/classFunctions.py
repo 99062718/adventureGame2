@@ -21,12 +21,12 @@ class person: #Creates class from which characters and enemies inherit
             "name": characterData["name"],
             "health": characterData["health"],
             "maxHealth": characterData["maxHealth" if characterData.get("maxHealth") else "health"],
+            "mana": characterData["mana"],
+            "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
             "attacks": characterData["attacks"] if characterData.get("attacks") else [],
             "attackMulti": characterData["attackMulti"] if characterData.get("attackMulti") else 1,
             "speed": characterData["speed"] if characterData.get("speed") else 1,
             "defense": characterData["defense"] if characterData.get("defense") else 1,
-            "mana": characterData["mana"],
-            "maxMana": characterData["maxMana"] if characterData.get("maxMana") else characterData["mana"],
             "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
             "equippedItems": {bodypart: characterData["equippedItems"].get(bodypart) for bodypart in self.bodyparts},
             "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
@@ -116,8 +116,8 @@ class person: #Creates class from which characters and enemies inherit
         else:
             return False
 
-    def giveAllStats(self): #Creates string with all stats of person
-        return "".join(f"{stat} - {value}\n" for stat, value in self._characterStats.items())
+    def giveAllStats(self, dontShow=[]): #Creates string with all stats of person
+        return "".join(f"{stat} - {value}\n" for stat, value in self._characterStats.items() if stat not in dontShow)
 
 #-------------------------------------------------Characters
 
@@ -125,11 +125,13 @@ class characters(person): #Used for characters that have been recruited or are p
     onTeam = []
     inventory = []
     teamEquiped = []
+    currency = 0
 
     def __init__(self, characterData):
         super().__init__(characterData)
         self._characterStats["team"] = "character"
         self._characterStats["level"] = characterData["level"] if characterData.get("level") else 1
+        self._characterStats["statScaling"] = characterData.get("statScaling")
         self._characterStats["xp"] = characterData["xp"] if characterData.get("xp") else 0
         self._characterStats["xpForNextLevel"] = characterData["xpForNextLevel"] if characterData.get("xpForNextLevel") else 10
         self._characterStats["toLearn"] = characterData.get("toLearn")

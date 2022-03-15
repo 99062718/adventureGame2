@@ -499,7 +499,7 @@ def checkCharacterMenu():
 
 def showStats(data):
     if playerAnswer.get():
-        info = characterDict[playerAnswer.get()].giveAllStats()
+        info = characterDict[playerAnswer.get()].giveAllStats(["team", "statScaling", "toLearn", "dmgOverTime"])
         messagebox.showinfo(message=info)
         openSettingsMenu()
 
