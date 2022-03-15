@@ -1,4 +1,4 @@
-import json, sys, os.path
+import json, os.path
 
 def getParent(path, levels):
     current_directory = os.path.dirname(__file__)
@@ -142,6 +142,16 @@ class characters(person): #Used for characters that have been recruited or are p
         if item in cls.inventory and notHas == "has" or item not in cls.inventory and notHas == "not" or item in cls.teamEquiped and notHas == "has" or item not in cls.teamEquiped and notHas == "not":
             return True
         return False
+
+    def checkForLevelUp(self): #Level up functionality
+        if self.checkStat("xp") >= self.checkStat("xpForNextLevel"):
+            self.changeStat("set", "xp", self.checkStat("xp") % self.checkStat("xpForNextLevel"))
+            self.changeStat("add", "level", 1)
+
+            if self.checkStat("toLearn"):
+                if str(self.checkStat("level")) in self.checkStat("toLearn"):
+                    for newAttack in self.checkStat("toLearn")[self.checkStat("level")]:
+                        self.changeStat("append", "attacks", newAttack)
 
 #-------------------------------------------------Enemies
 

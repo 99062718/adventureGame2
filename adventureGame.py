@@ -1,6 +1,4 @@
-import tkinter
-import random
-import json
+import tkinter, random, json
 from gameFunctions.classFunctions import *
 from tkinter import StringVar, ttk, messagebox, IntVar
 from tkinter.constants import OUTSIDE
@@ -17,7 +15,7 @@ from tkinter.constants import OUTSIDE
 # - Stats scale by given percentage
 # - Scale percentage can be given per stat
 # - Scale can be given per character or per campaign (prioritises character over campaign)
-# - Attacks can be learned by leveling up
+# - Add messages for leveling up and gaining new attacks
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
