@@ -2,7 +2,7 @@ import tkinter
 import random
 import json
 from gameFunctions.classFunctions import *
-from tkinter import StringVar, ttk, messagebox
+from tkinter import StringVar, ttk, messagebox, IntVar
 from tkinter.constants import OUTSIDE
 
 #To do:
@@ -150,31 +150,42 @@ def theContentDestroyer9000(content, deleteAll=False): #Guess whos back. Back ag
 def contentCreator(roomContent, extraData=None): #With the arival of lord contentDestroyer, only the brave contentCreator can end its reign of tyranny
     global playerAnswer
     num = 0
-    playerAnswer = StringVar()
 
     theContentDestroyer9000(content)
 
     for currentContent in roomContent:
+        if currentContent[0] in ("choice", "textBox"):
+            playerAnswer = StringVar()
+        elif currentContent[0] == "numberBox":
+            playerAnswer = IntVar(value=0)
+
         for currentText in currentContent[1]:
             if "blockIf" in currentText: #Checks if widget should be shown or not
                 if checkIfHasAchievement(currentText["blockIf"]):
                     continue
 
-            if currentContent[0] == "text": #Creates label
-                currentWidget = tkinter.Label(text=currentText["data"][0])
-            elif currentContent[0] == "choice": #Creates radio button       
-                currentWidget = ttk.Radiobutton(
-                    text=currentText["data"][0],
-                    value=currentText["data"][1],
-                    variable=playerAnswer
-                )
-            elif currentContent[0] == "button": #Creates button
-                currentWidget = ttk.Button(
-                    text=currentText["data"][0],
-                    command=lambda toUse=currentText["data"][1], extraData=extraData if extraData else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
-                )
-            else:
-                raise ValueError(f"{currentContent[0]} is not a valid widget")
+            match currentContent[0]:        
+                case "text": #Creates label
+                    currentWidget = tkinter.Label(text=currentText["data"][0])
+                case "choice": #Creates radio button       
+                    currentWidget = ttk.Radiobutton(
+                        text=currentText["data"][0],
+                        value=currentText["data"][1],
+                        variable=playerAnswer
+                    )
+                case "button": #Creates button
+                    currentWidget = ttk.Button(
+                        text=currentText["data"][0],
+                        command=lambda toUse=currentText["data"][1], extraData=extraData if extraData else None: funcExecute(toUse, extraData) if extraData else funcExecute(toUse) #Turn this into a lambda function
+                    )
+                case "numberBox":
+                    currentWidget = ttk.Spinbox(
+                        from_=float("-inf"),
+                        to=float("inf"),
+                        textvariable=playerAnswer
+                    )
+                case _:
+                    raise ValueError(f"{currentContent[0]} is not a valid widget")
             
             if len(currentText["data"]) < 3:
                 currentWidget.grid(column=0, row=num)
@@ -397,11 +408,26 @@ def returnAllToMax():
 
 #--------------------------------------------------------------------------------Settings
 
+#-------------------------------------------------General menus
+
 def openSettingsMenu(): #Opens settings menu
     theContentDestroyer9000(content, deleteAll=True)
     contentCreator([
-        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "printRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLine"])]]
+        ["button", [{"data": data} for data in (["Exit", "loadCampaign", ""], ["Current region", "printRegion"], ["Inventory", "intoInventory"], ["Change party lines", "changePartyLineMenu"])]]
     ])
+
+def showTeamList(data): #Shows list of characters that can be chosen
+    if playerAnswer.get() or data.get("forceShow"):
+        if data.get("functionality") == "add":
+            data["item"] = playerAnswer.get()
+
+        contentCreator([
+            ["text", [{"data": ["Choose a character"]}]],
+            ["choice", [{"data": [character, character]} for character in characterDict]],
+            ["button", [{"data": ["Choose character", data["menu"]]}]]
+        ], data)
+
+#-------------------------------------------------Region printer
 
 def printRegion():
     messagebox.showinfo(message=f"Your current region is: {currentRegion[0]}")
@@ -417,7 +443,7 @@ def intoInventory(): #Opens inventory menu
 
 def showInventoryItemList(): #Shows list of items that can be chosen
     if playerAnswer.get() == "remove":
-        return showTeamList({"functionality": playerAnswer.get()})
+        return showTeamList({"functionality": playerAnswer.get(), "menu": "chooseBodypart"})
 
     if playerAnswer.get():
         text = playerAnswer.get() if playerAnswer.get() == "add" else "check stat of"
@@ -426,20 +452,7 @@ def showInventoryItemList(): #Shows list of items that can be chosen
             ["text", [{"data": [f"Choose an item to {text}:"]}]],
             ["choice", [{"data": [item, item]} for item in characters.inventory]],
             ["button", [{"data": ["Choose item", "executeItemFunc" if playerAnswer.get() == "stat" else "showTeamList"]}]]
-        ], {"functionality": playerAnswer.get()})
-
-def showTeamList(data): #Shows list of characters that can be chosen
-    text = "give item" if data["functionality"] == "add" else "take item from"
-
-    if playerAnswer.get():
-        if data["functionality"] == "add":
-            data["item"] = playerAnswer.get()
-
-        contentCreator([
-            ["text", [{"data": ["Choose a character"]}]],
-            ["choice", [{"data": [character, character]} for character in characterDict]],
-            ["button", [{"data": ["Choose character", "chooseBodypart"]}]]
-        ], data)
+        ], {"functionality": playerAnswer.get(), "menu": "chooseBodypart"})
 
 def chooseBodypart(data): #Choose bodypart to add/remove item from
     if playerAnswer.get():
@@ -460,6 +473,25 @@ def executeItemFunc(data): #adds/removes items from character or checks item sta
         else:
             text = "".join([f"{modifier}: {value}\n" for modifier, value in customItems[playerAnswer.get()].items()])
             messagebox.showinfo(message=text)
+        openSettingsMenu()
+
+#-------------------------------------------------Line changer
+
+def changePartyLineMenu(): #Opens showTeamList with insertLine as button function
+    showTeamList({"menu": "insertLine", "forceShow": True})
+
+def insertLine(data): #Player must enter line they want character on here
+    if playerAnswer.get():
+        playerAnswer.get()
+        contentCreator([
+            ["text", [{"data": [f"Enter a line to put {playerAnswer.get()} on:"]}]],
+            ["numberBox", [{"data": []}]],
+            ["button", [{"data": ["Choose line", "putOnLine"]}]]
+        ], playerAnswer.get())
+
+def putOnLine(character): #Puts chosen character on chosen line
+    if playerAnswer.get():
+        characterDict[character].changeStat("set", "onLine", playerAnswer.get())
         openSettingsMenu()
 
 #--------------------------------------------------------------------------------Main menu stuff
@@ -533,12 +565,15 @@ functionList = {
     "chooseCharacter": chooseCharacter,
     "loadCampaign": loadCampaign,
     "openSettingsMenu": openSettingsMenu,
+    "showTeamList": showTeamList,
     "printRegion": printRegion,
     "intoInventory": intoInventory,
     "showInventoryItemList": showInventoryItemList,
-    "showTeamList": showTeamList,
     "chooseBodypart": chooseBodypart,
     "executeItemFunc": executeItemFunc,
+    "changePartyLineMenu": changePartyLineMenu,
+    "insertLine": insertLine,
+    "putOnLine": putOnLine,
     "addToTeamMenu": addToTeamMenu,
     "addToTeam": addToTeam,
     "removeFromTeamMenu": removeFromTeamMenu,
