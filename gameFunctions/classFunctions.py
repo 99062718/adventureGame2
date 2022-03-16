@@ -169,6 +169,8 @@ class characters(person): #Used for characters that have been recruited or are p
                         self.changeStat("append", "attacks", newAttack)
                         newlyLearned.append(newAttack)
                     messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlyLearned))
+            
+            self.checkForLevelUp()
 
 #-------------------------------------------------Enemies
 
@@ -179,10 +181,6 @@ class enemies(person): #Used for enemies currently in battle with
         super().__init__(characterData)
         self._characterStats["team"] = "enemy"
         self._characterStats["currentAttack"] = characterData["currentAttack"] if characterData.get("currentAttack") else 0
-
-    def deleteSelf(self, name):
-        enemies.onTeam.remove(name)
-        del self
 
 #--------------------------------------------------------------------------------Dialogue system stuff
 

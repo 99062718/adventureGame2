@@ -21,8 +21,6 @@ from tkinter.constants import OUTSIDE
 # - Attacks can be learned by buying them from a shop
 # - Add ability to make certain choices open up new dialogue options
 # - Talking to npc should bring up 3 dialogue choices (based on highest in currentDialogue hierarchy) + shop when thats available
-#Create loot system (for things like gold for shops and items that can be picked up) (Lesser importance)
-# - Gold and xp obtained from killing enemies should be a mix between random and set
 #Support for multiple save files (Very imporant!!)
 # - Reminder that obj.__dict__ is a thing
 # - Battles are going to be a bit of a hard one. Save all enemies to currentRegionExtra and save that to json
@@ -286,6 +284,14 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
                 if boss not in playerAccomplishments["defeatedBosses"]:
                     playerAccomplishments["defeatedBosses"].append(boss)
 
+        for enemy, enemyData in enemyDict.items():
+            characters.currency += round(enemyData.checkStat("maxHealth") * 0.2)
+            attacks = [customAttacks[attack].get("damage") for attack in enemyData.checkStat("attacks")]
+            xpToGive = round(enemyData.checkStat("attackMulti") * max(attacks) * 0.5)
+            for character in characters.onTeam:
+                characterDict[character].changeStat("add", "xp", xpToGive)
+                characterDict[character].checkForLevelUp()
+
         return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifWin")
 
     if turnNum >= len(turnList):
@@ -384,7 +390,7 @@ def playerAttack(data): #Logic for player attacks
         ])
 
         if data["enemies"][data["toAttack"]].checkStat("health") <= 0:
-            data["enemies"][data["toAttack"]].deleteSelf(data["toAttack"])
+            enemies.onTeam.remove(data["toAttack"])
 
         currentRegionExtra["battle"]["turn"] += 1
         loadCampaign()
