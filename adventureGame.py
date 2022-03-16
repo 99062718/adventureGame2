@@ -10,8 +10,6 @@ from tkinter.constants import OUTSIDE
 # - Losing battle should trigger save state if ifLose hasent been specified
 #Create battle system (the line layer system) (Important)
 # - Npcs and player attacks can be removed and added
-#Level stuff
-# - Add needed xp scaling
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -285,7 +283,7 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
             xpToGive = round(enemyData.checkStat("attackMulti") * max(attacks) * 0.5)
             for character in characters.onTeam:
                 characterDict[character].changeStat("add", "xp", xpToGive)
-                characterDict[character].checkForLevelUp(campaignSettings[currentCampaign]["statScaling"])
+                characterDict[character].checkForLevelUp(campaignSettings[currentCampaign]["statScaling"], campaignSettings[currentCampaign]["xpScaling"])
 
         returnAllToMax()
 
@@ -499,7 +497,7 @@ def checkCharacterMenu():
 
 def showStats(data):
     if playerAnswer.get():
-        info = characterDict[playerAnswer.get()].giveAllStats(["team", "statScaling", "toLearn", "dmgOverTime"])
+        info = characterDict[playerAnswer.get()].giveAllStats(["team", "statScaling", "toLearn", "dmgOverTime", "item maxHealth", "item maxMana", "item defense", "item attackMulti", "item speed"])
         messagebox.showinfo(message=info)
         openSettingsMenu()
 

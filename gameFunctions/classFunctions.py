@@ -154,12 +154,13 @@ class characters(person): #Used for characters that have been recruited or are p
             return True
         return False
 
-    def checkForLevelUp(self, statScaling): #Level up functionality
+    def checkForLevelUp(self, statScaling, xpScaling): #Level up functionality
         changebleStats = ["maxHealth", "maxMana", "attackMulti", "defense", "speed"]
 
         if self.checkStat("xp") >= self.checkStat("xpForNextLevel"):
             self.changeStat("set", "xp", self.checkStat("xp") % self.checkStat("xpForNextLevel"))
             self.changeStat("add", "level", 1)
+            self.changeStat("set", "xpForNextLevel", round(self.checkStat("xpForNextLevel") * xpScaling))
             changedMessage = f"{self.checkStat('name')} leveled up!\nlevel: {self.checkStat('level')}\n"
 
             for toChange in changebleStats:
@@ -180,7 +181,7 @@ class characters(person): #Used for characters that have been recruited or are p
                         newlyLearned.append(newAttack)
                     messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlyLearned))
             
-            self.checkForLevelUp(statScaling)
+            self.checkForLevelUp(statScaling, xpScaling)
 
 #-------------------------------------------------Enemies
 
