@@ -1,4 +1,5 @@
-import json, os.path
+import json, os.path, tkinter
+from tkinter import messagebox
 
 def getParent(path, levels):
     current_directory = os.path.dirname(__file__)
@@ -155,7 +156,7 @@ class characters(person): #Used for characters that have been recruited or are p
 
             for toChange in changebleStats:
                 oldStat = self.checkStat(toChange)
-                changePercentage = self.checkStat(statScaling)[toChange] if self.checkStat(statScaling).get(toChange) else globalSettings["statScaling"][toChange]
+                changePercentage = self.checkStat("statScaling")[toChange] if self.checkStat("statScaling").get(toChange) else globalSettings["statScaling"][toChange]
                 self.changeStat("set", toChange, round(oldStat * changePercentage))
                 changedMessage += f"{toChange}: {oldStat} -> {self.checkStat(toChange)}\n"
 
@@ -167,7 +168,7 @@ class characters(person): #Used for characters that have been recruited or are p
                     for newAttack in self.checkStat("toLearn")[self.checkStat("level")]:
                         self.changeStat("append", "attacks", newAttack)
                         newlyLearned.append(newAttack)
-                    messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlylearned))
+                    messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlyLearned))
 
 #-------------------------------------------------Enemies
 
@@ -230,7 +231,7 @@ class npc: #Npc which can be recruited, talked to or bought things from
                         continue
 
                     if dialogue[0].get("world"): #Checks achievements player has accomplished
-                        if checkIfHasAchievement(dialogue[0]["world"], needsAll=True):
+                        if checkIfHasAchievement(dialogue[0]["world"], needsAll=True): #CheckIfHasAchievement does not work due to it being in the other file. Might have to move this class to the main file
                             passedCheck = True
 
                 if passedCheck:
