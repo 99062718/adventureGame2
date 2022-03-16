@@ -1,0 +1,11 @@
+{
+    "campaign": {
+        "statScaling": {
+            "maxHealth": 1.05,
+            "maxMana": 1.02,
+            "attackMulti": 1.01,
+            "defense": 1.01,
+            "speed": 1.01
+        }
+    }
+}

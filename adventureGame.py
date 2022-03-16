@@ -10,11 +10,8 @@ from tkinter.constants import OUTSIDE
 # - Losing battle should trigger save state if ifLose hasent been specified
 #Create battle system (the line layer system) (Important)
 # - Npcs and player attacks can be removed and added
-# - Make enemies drop xp and gold once battle has been won
-# - Base xp off of enemy healh
-# - Base gold off potential damage enemy can do
 #Level stuff
-# - Scale can be given per character or per campaign
+# - Add needed xp scaling
 #Create npc dialogue system (Important)
 # - Npcs should be able to get recruited based on certain criteria
 # - Add possibility for shops
@@ -277,8 +274,6 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
             returnAllToMax()
             return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifLose")
     elif not aliveEnemies: #Should trigger ifWin
-        returnAllToMax()
-
         if currentRegionExtra["battle"].get("bosses"): #Adds bosses to playerAccomplishments if any defeated
             for boss in currentRegionExtra["battle"]["bosses"]:
                 if boss not in playerAccomplishments["defeatedBosses"]:
@@ -290,7 +285,9 @@ def turnInnitializer(turnList, enemyDict, turnNum): #Checks everything turn rela
             xpToGive = round(enemyData.checkStat("attackMulti") * max(attacks) * 0.5)
             for character in characters.onTeam:
                 characterDict[character].changeStat("add", "xp", xpToGive)
-                characterDict[character].checkForLevelUp()
+                characterDict[character].checkForLevelUp(campaignSettings[currentCampaign]["statScaling"])
+
+        returnAllToMax()
 
         return nextRoom(campaigns[currentCampaign][currentRegion[0]][currentRegion[1]]["choiceEvents"], "ifWin")
 
@@ -550,9 +547,9 @@ def loadCampaign(startNew=False): #Starts that campaign
 
 #--------------------------------------------------------------------------------Json file reading
 
-def checkGameData(): #Reads campaigns, playableCharacters, battleTemplates, customItems, customEnemies and customAttacks .json files
-    global campaigns, battleTemplates, customAttacks, customEnemies, customItems, playableCharacters
-    files = ["campaigns", "battleTemplates", "customAttacks", "customEnemies", "customItems", "playableCharacters"]
+def checkGameData(): #Reads campaigns, playableCharacters, battleTemplates, customItems, customEnemies, customAttacks and campaignSettings .json files
+    global campaigns, battleTemplates, customAttacks, customEnemies, customItems, playableCharacters, campaignSettings
+    files = ["campaigns", "battleTemplates", "customAttacks", "customEnemies", "customItems", "playableCharacters", "campaignSettings"]
     data = {}
     for currentFile in files:
         with open(f"gameData/{currentFile}.json", "r") as openedFile:
@@ -564,6 +561,7 @@ def checkGameData(): #Reads campaigns, playableCharacters, battleTemplates, cust
     customEnemies = data["customEnemies"]
     customItems = data["customItems"]
     playableCharacters = data["playableCharacters"]
+    campaignSettings = data["campaignSettings"]
 
 #--------------------------------------------------------------------------------Automatic function execution
 

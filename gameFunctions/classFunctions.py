@@ -31,7 +31,12 @@ class person: #Creates class from which characters and enemies inherit
             "onLine": characterData["onLine"] if characterData.get("onLine") else 0,
             "equippedItems": {bodypart: characterData["equippedItems"].get(bodypart) for bodypart in self.bodyparts},
             "lifeSteal": characterData["lifeSteal"] if characterData.get("lifeSteal") else 0,
-            "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else []
+            "dmgOverTime": characterData["dmgOverTime"] if characterData.get("dmgOverTime") else [],
+            "item maxHealth": characterData["item maxHealth"] if characterData.get("item maxHealth") else 0,
+            "item maxMana": characterData["item maxMana"] if characterData.get("item maxMana") else 0,
+            "item attackMulti": characterData["item attackMulti"] if characterData.get("item attackMulti") else 0,
+            "item speed": characterData["item speed"] if characterData.get("item speed") else 0,
+            "item defense": characterData["item defense"] if characterData.get("item defense") else 0,
         }
 
         if not loadFromSave:
@@ -100,7 +105,10 @@ class person: #Creates class from which characters and enemies inherit
     def changeItemModifyer(self, item, remove=False): #Adds or removes item modifyer from person stats
         for modifier, value in customItems[item].items():
             match modifier: #Gives an error in my IDE. Works perfectly though...
-                case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "lifeSteal" | "defense"):
+                case ("maxHealth" | "attackMulti" | "speed" | "maxMana" | "defense"):
+                    self.changeStat("subtract" if remove else "add", modifier, value)
+                    self.changeStat("subtract" if remove else "add", f"item {modifier}", value)
+                case "lifeSteal":
                     self.changeStat("subtract" if remove else "add", modifier, value)
                 case "dmgOverTime":
                     for overTimeModifier in value:
@@ -146,7 +154,7 @@ class characters(person): #Used for characters that have been recruited or are p
             return True
         return False
 
-    def checkForLevelUp(self): #Level up functionality
+    def checkForLevelUp(self, statScaling): #Level up functionality
         changebleStats = ["maxHealth", "maxMana", "attackMulti", "defense", "speed"]
 
         if self.checkStat("xp") >= self.checkStat("xpForNextLevel"):
@@ -156,8 +164,10 @@ class characters(person): #Used for characters that have been recruited or are p
 
             for toChange in changebleStats:
                 oldStat = self.checkStat(toChange)
-                changePercentage = self.checkStat("statScaling")[toChange] if self.checkStat("statScaling").get(toChange) else globalSettings["statScaling"][toChange]
-                self.changeStat("set", toChange, round(oldStat * changePercentage))
+                changePercentage = self.checkStat("statScaling")[toChange] if self.checkStat("statScaling").get(toChange) else statScaling[toChange]
+                self.changeStat("set", toChange, round((oldStat - self.checkStat(f"item {toChange}")) * changePercentage + self.checkStat(f"item {toChange}"), 3))
+                if toChange in ["maxHealth", "maxMana"]:
+                     self.changeStat("set", toChange, round(self.checkStat(toChange)))
                 changedMessage += f"{toChange}: {oldStat} -> {self.checkStat(toChange)}\n"
 
             messagebox.showinfo(message=changedMessage)
@@ -170,7 +180,7 @@ class characters(person): #Used for characters that have been recruited or are p
                         newlyLearned.append(newAttack)
                     messagebox.showinfo(message=f"{self.checkStat('name')} has learned the following attacks:\n".join(f"{attack}\n" for attack in newlyLearned))
             
-            self.checkForLevelUp()
+            self.checkForLevelUp(statScaling)
 
 #-------------------------------------------------Enemies
 
